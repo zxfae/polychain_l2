@@ -182,7 +182,7 @@ jobs:
           if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
             echo "Installing DFX ${{ env.DFX_VERSION }}..."
             export TERM=dumb
-            curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --yes --version ${{ env.DFX_VERSION }} > install.log 2>&1 || {
+            curl -fsSL https://internetcomputer.org/install.sh | TERM=dumb sh -s -- --yes --version ${{ env.DFX_VERSION }} < /dev/null > install.log 2>&1 || {
               cat install.log
               echo "Failed to install DFX"
               exit 1
