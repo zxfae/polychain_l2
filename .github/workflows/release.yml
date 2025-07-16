@@ -128,10 +128,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-dfx-
 
-      - name: Install DFX
+      - name: Install DFX with logs
+        env:
+          DFX_VERSION: 0.15.2
         run: |
-          curl -fsSL https://internetcomputer.org/install.sh | sh
+          curl -sSL https://internetcomputer.org/install.sh -o install.sh
+          sh -x install.sh -- --yes 2>&1 | tee install.log
+          echo "$HOME/bin" >> $GITHUB_PATH
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+          cat install.log
 
       - name: Install dependencies
         run: npm ci
@@ -244,10 +249,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-dfx-
 
-      - name: Install DFX
+      - name: Install DFX with logs
+        env:
+          DFX_VERSION: 0.15.2
         run: |
-          sh -ic "$(curl -fsSL https://internetcomputer.org/install.sh)" -- --yes
+          curl -sSL https://internetcomputer.org/install.sh -o install.sh
+          sh -x install.sh -- --yes 2>&1 | tee install.log
           echo "$HOME/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+          cat install.log
 
       - name: Install dependencies
         run: npm ci
