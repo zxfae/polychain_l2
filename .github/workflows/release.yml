@@ -130,8 +130,7 @@ jobs:
 
       - name: Install DFX
         run: |
-          wget -O install-dfx.sh "https://raw.githubusercontent.com/dfinity/sdk/main/public/install-dfx.sh"
-          DFXVM_INIT_YES=true bash install-dfx.sh < /dev/null
+          curl -fsSL https://internetcomputer.org/install.sh | sh
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
 
       - name: Install dependencies
