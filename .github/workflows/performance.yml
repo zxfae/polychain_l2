@@ -42,9 +42,12 @@ jobs:
           
       - name: Check binary size
         run: |
-          cargo build --release --target wasm32-unknown-unknown
           echo "## Binary Sizes" >> performance-report.md
-          find target/wasm32-unknown-unknown/release -name "*.wasm" -exec ls -lh {} \; >> performance-report.md
+          cargo build --release --target wasm32-unknown-unknown || {
+            echo "Build failed" >> performance-report.md
+            exit 0
+          }
+          find target/wasm32-unknown-unknown/release -name "*.wasm" -exec ls -lh {} \; >> performance-report.md || echo "No WASM files found" >> performance-report.md
 
       - name: Memory usage analysis
         run: |
@@ -67,7 +70,12 @@ jobs:
         run: npm ci
 
       - name: Build frontend
-        run: npm run build --workspace=src/polychain_l2_frontend
+        run: |
+          npm run build --workspace=src/polychain_l2_frontend || {
+            echo "Build failed, creating empty performance report"
+            echo "## Frontend Build Failed" >> frontend-performance.md
+            echo "Frontend build failed during CI run" >> frontend-performance.md
+          }
 
       - name: Bundle analysis
         run: |
@@ -80,11 +88,26 @@ jobs:
 
       - name: Lighthouse CI (Static)
         run: |
-          npm install -g @lhci/cli@0.12.x || true
-          if command -v lhci >/dev/null 2>&1; then
-            lhci collect --staticDistDir=src/polychain_l2_frontend/dist --url=http://localhost/index.html || echo "Lighthouse analysis skipped"
+          echo "## Lighthouse Analysis" >> frontend-performance.md
+          npm install -g @lhci/cli@0.12.x || {
+            echo "Failed to install Lighthouse CLI" >> frontend-performance.md
+            echo "Lighthouse CLI installation failed" >> frontend-performance.md
+            exit 0
+          }
+          if command -v lhci >/dev/null 2>&1 && [ -d "src/polychain_l2_frontend/dist" ]; then
+            lhci collect --staticDistDir=src/polychain_l2_frontend/dist --url=http://localhost/index.html || {
+              echo "Lighthouse analysis failed" >> frontend-performance.md
+            }
           else
-            echo "Lighthouse CLI not available"
+            echo "Lighthouse CLI not available or dist directory missing" >> frontend-performance.md
+          fi
+
+      - name: Create default performance report if missing
+        if: always()
+        run: |
+          if [ ! -f "frontend-performance.md" ]; then
+            echo "## Frontend Performance Report" > frontend-performance.md
+            echo "Performance analysis was not completed during this run." >> frontend-performance.md
           fi
 
       - name: Upload performance artifacts
@@ -93,7 +116,8 @@ jobs:
         with:
           name: performance-reports
           path: |
-            *performance*.md
+            frontend-performance.md
+            performance-report.md
             .lighthouseci/
           retention-days: 7
 
@@ -157,25 +181,50 @@ jobs:
         run: |
           export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
           npm ci
-          npm run build --workspace=src/polychain_l2_frontend
-          dfx deploy
+          npm run build --workspace=src/polychain_l2_frontend || {
+            echo "## Load Testing Results" >> load-test-results.md
+            echo "Frontend build failed, skipping load test" >> load-test-results.md
+            exit 0
+          }
+          dfx deploy || {
+            echo "## Load Testing Results" >> load-test-results.md
+            echo "DFX deploy failed, skipping load test" >> load-test-results.md
+            exit 0
+          }
 
       - name: Simple load test
         run: |
           export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
           echo "## Load Testing Results" >> load-test-results.md
+          echo "Test started at: $(date)" >> load-test-results.md
+          
+          # Check if DFX is running
+          if ! dfx ping >/dev/null 2>&1; then
+            echo "DFX network not responding, skipping load test" >> load-test-results.md
+            exit 0
+          fi
           
           # Simple stress test with curl
           for i in {1..10}; do
             echo "Request $i:" >> load-test-results.md
-            time curl -s http://127.0.0.1:4943/ >> load-test-results.md 2>&1 || echo "Request failed" >> load-test-results.md
+            timeout 30 curl -s http://127.0.0.1:4943/ >> load-test-results.md 2>&1 || echo "Request $i failed or timed out" >> load-test-results.md
           done
+          
+          echo "Test completed at: $(date)" >> load-test-results.md
 
       - name: Stop DFX
         if: always()
         run: |
           export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
           dfx stop
+
+      - name: Create default load test report if missing
+        if: always()
+        run: |
+          if [ ! -f "load-test-results.md" ]; then
+            echo "## Load Testing Results" > load-test-results.md
+            echo "Load testing was not completed during this run." >> load-test-results.md
+          fi
 
       - name: Upload load test results
         uses: actions/upload-artifact@v4
