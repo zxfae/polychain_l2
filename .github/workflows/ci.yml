@@ -134,10 +134,10 @@ jobs:
         run: npm ci
 
       - name: Type check
-        run: npm run build --workspace=src/polychain_l2_frontend
+        run: npm run test --workspace=src/polychain_l2_frontend
 
-      - name: Run tests
-        run: npm test --workspace=src/polychain_l2_frontend --if-present
+      - name: Build frontend
+        run: npm run build --workspace=src/polychain_l2_frontend
 
   dfx-check:
     needs: changes
