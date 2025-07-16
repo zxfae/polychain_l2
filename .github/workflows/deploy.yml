@@ -1,0 +1,190 @@
+name: Deploy to ICP
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'development' }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'development' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      - name: Cache cargo target
+        uses: actions/cache@v4
+        with:
+          path: target/
+          key: ${{ runner.os }}-cargo-target-deploy-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-target-deploy-
+            ${{ runner.os }}-cargo-target-
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            src/polychain_l2_frontend/node_modules
+          key: ${{ runner.os }}-node-18-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-18-
+
+      - name: Cache DFX
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/dfinity
+          key: ${{ runner.os }}-dfx-${{ hashFiles('dfx.json') }}
+          restore-keys: |
+            ${{ runner.os }}-dfx-
+
+      - name: Install DFX
+        run: |
+          wget -O install-dfx.sh "https://raw.githubusercontent.com/dfinity/sdk/main/public/install-dfx.sh"
+          DFXVM_INIT_YES=true bash install-dfx.sh < /dev/null
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up DFX identity
+        run: |
+          echo "${{ secrets.DFX_IDENTITY }}" | base64 -d > identity.pem
+          dfx identity import github-actions identity.pem
+          dfx identity use github-actions
+          rm identity.pem
+
+      - name: Set network based on environment
+        run: |
+          if [ "${{ github.event.inputs.environment || 'development' }}" = "production" ]; then
+            echo "DFX_NETWORK=ic" >> $GITHUB_ENV
+          else
+            echo "DFX_NETWORK=local" >> $GITHUB_ENV
+          fi
+
+      - name: Start local network (if needed)
+        run: |
+          if [ "$DFX_NETWORK" = "local" ]; then
+            dfx start --background --clean
+            sleep 10
+          fi
+
+      - name: Build and deploy
+        run: |
+          dfx deploy --network $DFX_NETWORK --with-cycles 1000000000000
+
+      - name: Get canister URLs
+        id: canister-urls
+        run: |
+          if [ "$DFX_NETWORK" = "ic" ]; then
+            BACKEND_URL="https://$(dfx canister id polychain_l2_backend --network ic).raw.icp0.io"
+            FRONTEND_URL="https://$(dfx canister id polychain_l2_frontend --network ic).icp0.io"
+          else
+            BACKEND_URL="http://localhost:4943?canisterId=$(dfx canister id polychain_l2_backend)"
+            FRONTEND_URL="http://localhost:4943?canisterId=$(dfx canister id polychain_l2_frontend)"
+          fi
+          echo "backend_url=$BACKEND_URL" >> $GITHUB_OUTPUT
+          echo "frontend_url=$FRONTEND_URL" >> $GITHUB_OUTPUT
+
+      - name: Stop local network (if needed)
+        if: always()
+        run: |
+          if [ "$DFX_NETWORK" = "local" ]; then
+            dfx stop
+          fi
+
+      - name: Create deployment summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ github.event.inputs.environment || 'development' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Network**: $DFX_NETWORK" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend URL**: ${{ steps.canister-urls.outputs.backend_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend URL**: ${{ steps.canister-urls.outputs.frontend_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed at**: $(date)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && comment.body.includes('Deployment Summary')
+            );
+            
+            const body = `## 🚀 Deployment Summary
+            - **Environment**: ${{ github.event.inputs.environment || 'development' }}
+            - **Network**: ${process.env.DFX_NETWORK}
+            - **Backend URL**: ${{ steps.canister-urls.outputs.backend_url }}
+            - **Frontend URL**: ${{ steps.canister-urls.outputs.frontend_url }}
+            - **Commit**: ${{ github.sha }}
+            - **Deployed at**: ${new Date().toISOString()}`;
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
