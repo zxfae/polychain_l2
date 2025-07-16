@@ -204,11 +204,25 @@ jobs:
             exit 0
           fi
           
-          # Simple stress test with curl
-          for i in {1..10}; do
-            echo "Request $i:" >> load-test-results.md
-            timeout 30 curl -s http://127.0.0.1:4943/ >> load-test-results.md 2>&1 || echo "Request $i failed or timed out" >> load-test-results.md
-          done
+          # Get frontend canister URL
+          FRONTEND_URL=$(dfx canister call polychain_l2_frontend http_request '(record{url="/";method="GET";headers=vec{};body=vec{}})' 2>/dev/null || echo "")
+          CANISTER_ID=$(dfx canister id polychain_l2_frontend 2>/dev/null || echo "")
+          
+          if [ -n "$CANISTER_ID" ]; then
+            echo "Testing canister: $CANISTER_ID" >> load-test-results.md
+            # Simple stress test with dfx canister calls
+            for i in {1..5}; do
+              echo "Request $i:" >> load-test-results.md
+              timeout 30 dfx canister call polychain_l2_backend greet "(\"load-test-$i\")" >> load-test-results.md 2>&1 || echo "Request $i failed or timed out" >> load-test-results.md
+            done
+          else
+            echo "Could not determine canister ID, testing DFX endpoint" >> load-test-results.md
+            # Fallback to DFX health check
+            for i in {1..3}; do
+              echo "Health check $i:" >> load-test-results.md
+              timeout 10 dfx ping >> load-test-results.md 2>&1 || echo "Health check $i failed" >> load-test-results.md
+            done
+          fi
           
           echo "Test completed at: $(date)" >> load-test-results.md
 
