@@ -45,7 +45,13 @@ check_requirements() {
 
     # Node.js
     if command_exists node; then
-        log_success "Node.js $(node --version) found"
+        NODE_VERSION=$(node --version | cut -d'v' -f2)
+        if [[ "$(echo $NODE_VERSION | cut -d'.' -f1)" -ge 18 ]]; then
+            log_success "Node.js $NODE_VERSION found"
+        else
+            log_error "Node.js version $NODE_VERSION is too old. Please install Node.js 18 or higher."
+            exit 1
+        fi
     else
         log_error "Node.js not found. Please install Node.js 18 or higher."
         exit 1
@@ -63,7 +69,7 @@ check_requirements() {
     if command_exists rustc; then
         log_success "Rust $(rustc --version) found"
     else
-        log_error "Rust not found. Please install Rust (https://rustup.rs/)."
+        log_error "Rust not found. Please install Rust[](https://rustup.rs/)."
         exit 1
     fi
 
@@ -76,6 +82,7 @@ check_requirements() {
             log_error "Failed to add wasm32 target"
             exit 1
         }
+        log_success "wasm32-unknown-unknown target installed"
     fi
 
     # DFX
@@ -83,17 +90,25 @@ check_requirements() {
         DFX_INSTALLED_VERSION=$(dfx --version | awk '{print $2}')
         log_success "DFX $DFX_INSTALLED_VERSION found"
         if [ "$DFX_INSTALLED_VERSION" != "$DFX_VERSION" ]; then
-            log_warning "DFX version $DFX_INSTALLED_VERSION does not match requested $DFX_VERSION. Consider reinstalling."
+            log_warning "DFX version $DFX_INSTALLED_VERSION does not match requested $DFX_VERSION. Reinstalling..."
+            sh -c "$(curl -fsSL https://internetcomputer.org/install.sh)" -- --yes --version "$DFX_VERSION" || {
+                log_error "Failed to install DFX $DFX_VERSION"
+                exit 1
+            }
+            log_success "DFX $DFX_VERSION installed"
         fi
     else
         log_warning "DFX not found. Installing DFX $DFX_VERSION..."
-        sh -ic "$(curl -fsSL https://internetcomputer.org/install.sh)" -- --yes || {
-            log_error "Failed to install DFX"
+        sh -c "$(curl -fsSL https://internetcomputer.org/install.sh)" -- --yes --version "$DFX_VERSION" || {
+            log_error "Failed to install DFX $DFX_VERSION"
             exit 1
         }
-        export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
-        log_success "DFX installed"
+        log_success "DFX $DFX_VERSION installed"
     fi
+
+    # Update PATH
+    export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
+    log_info "Updated PATH to include DFX binary locations"
 }
 
 # Install dependencies
@@ -102,14 +117,14 @@ install_dependencies() {
 
     log_info "Installing root dependencies..."
     npm ci || {
-        log_warning "Failed to install root dependencies"
-        return 1
+        log_error "Failed to install root dependencies"
+        exit 1
     }
 
     log_info "Installing frontend dependencies..."
     npm ci --workspace=src/polychain_l2_frontend || {
-        log_warning "Failed to install frontend dependencies"
-        return 1
+        log_error "Failed to install frontend dependencies"
+        exit 1
     }
 
     log_success "Dependencies installed"
@@ -120,32 +135,44 @@ setup_dfx() {
     log_info "Setting up DFX..."
 
     # Stop any existing DFX processes
-    if command_exists dfx && dfx ping > /dev/null 2>&1; then
+    if command_exists dfx && dfx ping >/dev/null 2>&1; then
         log_warning "DFX is already running. Stopping..."
-        dfx stop || log_info "Could not stop DFX, continuing anyway..."
+        dfx stop || log_warning "Could not stop DFX, continuing anyway..."
     fi
 
     log_info "Starting DFX..."
     dfx start --background --clean || {
         log_error "Failed to start DFX"
-        return 1
+        exit 1
     }
 
     # Wait for DFX to be ready
     sleep 5
 
     log_info "Deploying Internet Identity..."
-    dfx deploy internet_identity || log_warning "Failed to deploy Internet Identity"
+    dfx deploy internet_identity || {
+        log_warning "Failed to deploy Internet Identity"
+        return 1
+    }
 
     log_info "Deploying backend..."
-    dfx deploy polychain_l2_backend || log_warning "Failed to deploy backend"
+    dfx deploy polychain_l2_backend || {
+        log_warning "Failed to deploy backend"
+        return 1
+    }
 
     log_info "Generating frontend declarations for backend..."
-    dfx generate polychain_l2_backend || log_warning "Failed to generate backend declarations"
+    dfx generate polychain_l2_backend || {
+        log_warning "Failed to generate backend declarations"
+        return 1
+    }
     sleep 2
 
     log_info "Deploying frontend..."
-    dfx deploy polychain_l2_frontend || log_warning "Failed to deploy frontend"
+    dfx deploy polychain_l2_frontend || {
+        log_warning "Failed to deploy frontend"
+        return 1
+    }
 
     log_success "DFX setup complete"
 }
@@ -155,11 +182,17 @@ run_tests() {
     log_info "Running initial tests..."
 
     log_info "Testing Rust backend..."
-    cargo test || log_warning "Backend tests failed"
+    cargo test || {
+        log_warning "Backend tests failed"
+        return 1
+    }
 
     if [ -f "src/polychain_l2_frontend/package.json" ]; then
         log_info "Testing frontend..."
-        npm run --workspace=src/polychain_l2_frontend --if-present test || log_warning "Frontend tests failed or not found"
+        npm run --workspace=src/polychain_l2_frontend --if-present test || {
+            log_warning "Frontend tests failed or not found"
+            return 1
+        }
     fi
 
     log_success "Tests completed"
@@ -180,7 +213,7 @@ show_next_steps() {
     echo "  dfx deploy                   # Deploy all canisters"
     echo
     echo "📚 Useful resources:"
-    echo "  - DFX SDK: https://sdk.dfinity.org/"
+    echo "  - DFX SDK: https://internetcomputer.org/docs/current/developer-docs/cli-tools/dfx"
     echo "  - IC CDK: https://docs.rs/ic-cdk/"
     echo "  - React: https://reactjs.org/docs/"
     echo

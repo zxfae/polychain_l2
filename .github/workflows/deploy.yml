@@ -21,12 +21,13 @@ on:
           - production
 
 concurrency:
-  group: deploy-${{ github.event.inputs.environment || 'development' }}
+  group: deploy-${{ github.event.inputs.environment || github.ref_name }}
   cancel-in-progress: false
 
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  DFX_VERSION: 0.15.2
 
 jobs:
   deploy:
@@ -62,9 +63,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: target/
-          key: ${{ runner.os }}-cargo-target-deploy-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-target-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-target-deploy-
             ${{ runner.os }}-cargo-target-
 
       - name: Cache node_modules
@@ -80,30 +80,45 @@ jobs:
       - name: Cache DFX
         uses: actions/cache@v4
         with:
-          path: ~/.cache/dfinity
-          key: ${{ runner.os }}-dfx-${{ hashFiles('dfx.json') }}
+          path: |
+            ~/.cache/dfinity
+            ~/bin/dfx
+            ~/.local/share/dfx
+          key: ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-${{ hashFiles('dfx.json') }}
           restore-keys: |
-            ${{ runner.os }}-dfx-
+            ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-
 
-      - name: Install DFX with logs
-        env:
-          DFX_VERSION: 0.15.2
+      - name: Install DFX
         run: |
-          curl -sSL https://internetcomputer.org/install.sh -o install.sh
-          sh -x install.sh -- --yes 2>&1 | tee install.log
+          if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
+            echo "Installing DFX ${{ env.DFX_VERSION }}..."
+            sh -c "$(curl -fsSL https://internetcomputer.org/install.sh)" -- --yes --version ${{ env.DFX_VERSION }}
+          else
+            echo "DFX ${{ env.DFX_VERSION }} already installed."
+          fi
+
+      - name: Verify DFX installation
+        run: |
+          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
+          dfx --version
+          if [ "$(dfx --version | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
+            echo "DFX version mismatch. Expected ${{ env.DFX_VERSION }}, found $(dfx --version | awk '{print $2}')"
+            exit 1
+          fi
+
+      - name: Update PATH for subsequent steps
+        run: |
           echo "$HOME/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
-          cat install.log
 
       - name: Install dependencies
         run: npm ci
 
       - name: Set up DFX identity
         run: |
-          echo "${{ secrets.DFX_IDENTITY }}" | base64 -d > identity.pem
-          dfx identity import github-actions identity.pem
+          echo "${{ secrets.DFX_IDENTITY }}" | base64 -d | dfx identity import github-actions -
           dfx identity use github-actions
-          rm identity.pem
 
       - name: Set network based on environment
         run: |
@@ -121,8 +136,7 @@ jobs:
           fi
 
       - name: Build and deploy
-        run: |
-          dfx deploy --network $DFX_NETWORK --with-cycles 1000000000000
+        run: dfx deploy --network $DFX_NETWORK --with-cycles 1000000000000
 
       - name: Get canister URLs
         id: canister-urls
@@ -152,7 +166,7 @@ jobs:
           echo "- **Backend URL**: ${{ steps.canister-urls.outputs.backend_url }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Frontend URL**: ${{ steps.canister-urls.outputs.frontend_url }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Deployed at**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed at**: $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_STEP_SUMMARY
 
       - name: Comment on PR (if applicable)
         if: github.event_name == 'pull_request'

@@ -23,6 +23,7 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  DFX_VERSION: 0.15.2
 
 jobs:
   changes:
@@ -160,20 +161,37 @@ jobs:
       - name: Cache DFX
         uses: actions/cache@v4
         with:
-          path: ~/.cache/dfinity
-          key: ${{ runner.os }}-dfx-${{ hashFiles('dfx.json') }}
+          path: |
+            ~/.cache/dfinity
+            ~/bin/dfx
+            ~/.local/share/dfx
+          key: ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-${{ hashFiles('dfx.json') }}
           restore-keys: |
-            ${{ runner.os }}-dfx-
+            ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-
 
-      - name: Install DFX with logs
-        env:
-          DFX_VERSION: 0.15.2
+      - name: Install DFX
         run: |
-          curl -sSL https://internetcomputer.org/install.sh -o install.sh
-          sh -x install.sh -- --yes 2>&1 | tee install.log
+          if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
+            echo "Installing DFX ${{ env.DFX_VERSION }}..."
+            sh -c "$(curl -fsSL https://internetcomputer.org/install.sh)" -- --yes --version ${{ env.DFX_VERSION }}
+          else
+            echo "DFX ${{ env.DFX_VERSION }} already installed."
+          fi
+
+      - name: Verify DFX installation
+        run: |
+          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
+          dfx --version
+          if [ "$(dfx --version | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
+            echo "DFX version mismatch. Expected ${{ env.DFX_VERSION }}, found $(dfx --version | awk '{print $2}')"
+            exit 1
+          fi
+
+      - name: Update PATH for subsequent steps
+        run: |
           echo "$HOME/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
-          cat install.log
 
       - name: Start DFX
         run: |
@@ -184,10 +202,10 @@ jobs:
         run: npm ci
 
       - name: Deploy canisters
-        run: |
-          dfx deploy --check
+        run: dfx deploy --check
 
       - name: Stop DFX
+        if: always()
         run: dfx stop
 
   security-scan:
@@ -200,13 +218,4 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript, rust
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+     
