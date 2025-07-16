@@ -164,6 +164,7 @@ jobs:
           path: |
             ~/.cache/dfinity
             ~/bin/dfx
+            ~/.local/bin/dfx
             ~/.local/share/dfx
           key: ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-${{ hashFiles('dfx.json') }}
           restore-keys: |
@@ -173,7 +174,14 @@ jobs:
         run: |
           if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
             echo "Installing DFX ${{ env.DFX_VERSION }}..."
-            sh -c "$(curl -fsSL https://internetcomputer.org/install.sh)" -- --yes --version ${{ env.DFX_VERSION }}
+            # Force non-interactive mode by setting TERM and redirecting input
+            export TERM=dumb
+            curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --yes --version ${{ env.DFX_VERSION }} > install.log 2>&1 || {
+              cat install.log
+              echo "Failed to install DFX"
+              exit 1
+            }
+            cat install.log
           else
             echo "DFX ${{ env.DFX_VERSION }} already installed."
           fi
@@ -193,29 +201,23 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
 
-      - name: Start DFX
+      - name: Check DFX network
         run: |
-          dfx start --background --clean
-          sleep 5
+          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
+          dfx start --background --clean --host 127.0.0.1:4943
+          sleep 10
+          dfx ping || { echo "DFX network is not responding"; dfx stop; exit 1; }
 
       - name: Install dependencies
         run: npm ci
 
       - name: Deploy canisters
-        run: dfx deploy --check
+        run: |
+          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
+          dfx deploy --check || { echo "Failed to deploy canisters"; dfx stop; exit 1; }
 
       - name: Stop DFX
         if: always()
-        run: dfx stop
-
-  security-scan:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-     
+        run: |
+          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
+          dfx stop

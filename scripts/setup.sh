@@ -91,7 +91,9 @@ check_requirements() {
         log_success "DFX $DFX_INSTALLED_VERSION found"
         if [ "$DFX_INSTALLED_VERSION" != "$DFX_VERSION" ]; then
             log_warning "DFX version $DFX_INSTALLED_VERSION does not match requested $DFX_VERSION. Reinstalling..."
-            sh -c "$(curl -fsSL https://internetcomputer.org/install.sh)" -- --yes --version "$DFX_VERSION" || {
+            export TERM=dumb
+            curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --yes --version "$DFX_VERSION" > install.log 2>&1 || {
+                cat install.log
                 log_error "Failed to install DFX $DFX_VERSION"
                 exit 1
             }
@@ -99,7 +101,9 @@ check_requirements() {
         fi
     else
         log_warning "DFX not found. Installing DFX $DFX_VERSION..."
-        sh -c "$(curl -fsSL https://internetcomputer.org/install.sh)" -- --yes --version "$DFX_VERSION" || {
+        export TERM=dumb
+        curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --yes --version "$DFX_VERSION" > install.log 2>&1 || {
+            cat install.log
             log_error "Failed to install DFX $DFX_VERSION"
             exit 1
         }
@@ -148,6 +152,10 @@ setup_dfx() {
 
     # Wait for DFX to be ready
     sleep 5
+    dfx ping || {
+        log_error "DFX network is not responding"
+        exit 1
+    }
 
     log_info "Deploying Internet Identity..."
     dfx deploy internet_identity || {
