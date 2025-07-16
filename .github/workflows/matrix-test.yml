@@ -139,14 +139,33 @@ jobs:
 
       - name: Install DFX
         run: |
-          echo "Installing DFX ${{ matrix.dfx-version }}..."
-          export TERM=dumb
-          curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --yes --version ${{ matrix.dfx-version }}
+          if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version 2>/dev/null | awk '{print $2}')" != "${{ matrix.dfx-version }}" ]; then
+            echo "Installing DFX ${{ matrix.dfx-version }}..."
+            export TERM=dumb
+            curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --yes --version ${{ matrix.dfx-version }} > install.log 2>&1 || {
+              cat install.log
+              echo "Failed to install DFX"
+              exit 1
+            }
+            cat install.log
+          else
+            echo "DFX ${{ matrix.dfx-version }} already installed."
+          fi
+
+      - name: Update PATH for DFX
+        run: |
+          echo "$HOME/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
 
       - name: Verify DFX installation
         run: |
           export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
           dfx --version
+          if [ "$(dfx --version | awk '{print $2}')" != "${{ matrix.dfx-version }}" ]; then
+            echo "DFX version mismatch. Expected ${{ matrix.dfx-version }}, found $(dfx --version | awk '{print $2}')"
+            exit 1
+          fi
 
       - name: Test DFX compatibility
         run: |
@@ -157,7 +176,7 @@ jobs:
           
           npm ci
           npm run build --workspace=src/polychain_l2_frontend
-          dfx deploy --check || { echo "Failed to deploy with DFX ${{ matrix.dfx-version }}"; dfx stop; exit 1; }
+          dfx deploy || { echo "Failed to deploy with DFX ${{ matrix.dfx-version }}"; dfx stop; exit 1; }
           
           dfx stop
 
@@ -207,8 +226,24 @@ jobs:
 
       - name: Install DFX
         run: |
-          export TERM=dumb
-          curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --yes --version ${{ env.DFX_VERSION }}
+          if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version 2>/dev/null | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
+            echo "Installing DFX ${{ env.DFX_VERSION }}..."
+            export TERM=dumb
+            curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --yes --version ${{ env.DFX_VERSION }} > install.log 2>&1 || {
+              cat install.log
+              echo "Failed to install DFX"
+              exit 1
+            }
+            cat install.log
+          else
+            echo "DFX ${{ env.DFX_VERSION }} already installed."
+          fi
+
+      - name: Update PATH for DFX
+        run: |
+          echo "$HOME/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
 
       - name: Full integration test
         run: |
@@ -227,8 +262,11 @@ jobs:
           npm run build --workspace=src/polychain_l2_frontend
           dfx deploy
           
-          # Basic canister interaction test
-          dfx canister call polychain_l2_backend greet '("integration-test")' || echo "Canister call test completed"
+          # Basic canister interaction test  
+          dfx canister call polychain_l2_backend greet '("integration-test")' || { 
+            echo "Warning: Canister call test failed, but continuing..."
+            dfx canister status --all || echo "Unable to get canister status"
+          }
           
           # Cleanup
           dfx stop
