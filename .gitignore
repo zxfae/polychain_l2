@@ -1,0 +1,23 @@
+# ICP
+.dfx/
+canister_ids.json
+.vessel/
+
+# Node
+node_modules/
+npm-debug.log*
+.npm
+
+# Rust
+target/
+Cargo.lock
+
+# OS
+.DS_Store
+.vscode/
+*.swp
+*.swo
+
+# Local env
+.env
+.env.local
