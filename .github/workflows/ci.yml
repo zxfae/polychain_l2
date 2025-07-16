@@ -157,6 +157,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
 
       - name: Cache DFX
         uses: actions/cache@v4
@@ -210,6 +211,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build frontend
+        run: npm run build --workspace=src/polychain_l2_frontend
 
       - name: Deploy canisters
         run: |
