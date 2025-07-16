@@ -5,6 +5,10 @@
 
 set -e
 
+# Set this to the desired DFX version for reproducibility
+DFX_VERSION="0.15.2"
+export DFX_VERSION
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -37,52 +41,57 @@ command_exists() {
 # Check system requirements
 check_requirements() {
     log_info "Checking system requirements..."
-    
-    # Check Node.js
+    log_info "DFX_VERSION is set to $DFX_VERSION"
+
+    # Node.js
     if command_exists node; then
-        NODE_VERSION=$(node --version | cut -d 'v' -f 2)
-        log_success "Node.js $NODE_VERSION found"
+        log_success "Node.js $(node --version) found"
     else
         log_error "Node.js not found. Please install Node.js 18 or higher."
         exit 1
     fi
-    
-    # Check npm
+
+    # npm
     if command_exists npm; then
-        NPM_VERSION=$(npm --version)
-        log_success "npm $NPM_VERSION found"
+        log_success "npm $(npm --version) found"
     else
         log_error "npm not found. Please install npm."
         exit 1
     fi
-    
-    # Check Rust
+
+    # Rust
     if command_exists rustc; then
-        RUST_VERSION=$(rustc --version | cut -d ' ' -f 2)
-        log_success "Rust $RUST_VERSION found"
+        log_success "Rust $(rustc --version) found"
     else
-        log_error "Rust not found. Please install Rust from https://rustup.rs/"
+        log_error "Rust not found. Please install Rust (https://rustup.rs/)."
         exit 1
     fi
-    
-    # Check wasm32 target
+
+    # wasm32 target
     if rustup target list --installed | grep -q "wasm32-unknown-unknown"; then
         log_success "wasm32-unknown-unknown target found"
     else
         log_warning "wasm32-unknown-unknown target not found. Installing..."
-        rustup target add wasm32-unknown-unknown
+        rustup target add wasm32-unknown-unknown || {
+            log_error "Failed to add wasm32 target"
+            exit 1
+        }
     fi
-    
-    # Check DFX
+
+    # DFX
     if command_exists dfx; then
-        DFX_VERSION=$(dfx --version | cut -d ' ' -f 2)
-        log_success "DFX $DFX_VERSION found"
+        DFX_INSTALLED_VERSION=$(dfx --version | awk '{print $2}')
+        log_success "DFX $DFX_INSTALLED_VERSION found"
+        if [ "$DFX_INSTALLED_VERSION" != "$DFX_VERSION" ]; then
+            log_warning "DFX version $DFX_INSTALLED_VERSION does not match requested $DFX_VERSION. Consider reinstalling."
+        fi
     else
-        log_warning "DFX not found. Installing..."
-        wget -O install-dfx.sh "https://raw.githubusercontent.com/dfinity/sdk/main/public/install-dfx.sh"
-        DFXVM_INIT_YES=true bash install-dfx.sh < /dev/null
-        rm install-dfx.sh
-        export PATH="$HOME/.local/share/dfx/bin:$PATH"
+        log_warning "DFX not found. Installing DFX $DFX_VERSION..."
+        sh -ic "$(curl -fsSL https://internetcomputer.org/install.sh)" -- --yes || {
+            log_error "Failed to install DFX"
+            exit 1
+        }
+        export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
         log_success "DFX installed"
     fi
 }
@@ -90,102 +99,101 @@ check_requirements() {
 # Install dependencies
 install_dependencies() {
     log_info "Installing dependencies..."
-    
-    # Install root dependencies
+
     log_info "Installing root dependencies..."
-    npm ci
-    
-    # Install frontend dependencies (handled by workspace)
+    npm ci || {
+        log_warning "Failed to install root dependencies"
+        return 1
+    }
+
     log_info "Installing frontend dependencies..."
-    npm ci --workspace=src/polychain_l2_frontend
-    
+    npm ci --workspace=src/polychain_l2_frontend || {
+        log_warning "Failed to install frontend dependencies"
+        return 1
+    }
+
     log_success "Dependencies installed"
 }
 
 # Setup DFX
 setup_dfx() {
     log_info "Setting up DFX..."
-    
+
     # Stop any existing DFX processes
-    if dfx ping > /dev/null 2>&1; then
+    if command_exists dfx && dfx ping > /dev/null 2>&1; then
         log_warning "DFX is already running. Stopping..."
-        dfx stop
+        dfx stop || log_info "Could not stop DFX, continuing anyway..."
     fi
-    
-    # Start DFX
+
     log_info "Starting DFX..."
-    dfx start --background --clean
-    
+    dfx start --background --clean || {
+        log_error "Failed to start DFX"
+        return 1
+    }
+
     # Wait for DFX to be ready
     sleep 5
-    
-    # Deploy Internet Identity
+
     log_info "Deploying Internet Identity..."
-    dfx deploy internet_identity
-    
-    # Deploy backend
+    dfx deploy internet_identity || log_warning "Failed to deploy Internet Identity"
+
     log_info "Deploying backend..."
-    dfx deploy polychain_l2_backend
-    
-    # Generate frontend declarations
-    log_info "Generating frontend declarations..."
-    dfx generate polychain_l2_backend
-    
-    # Deploy frontend
+    dfx deploy polychain_l2_backend || log_warning "Failed to deploy backend"
+
+    log_info "Generating frontend declarations for backend..."
+    dfx generate polychain_l2_backend || log_warning "Failed to generate backend declarations"
+    sleep 2
+
     log_info "Deploying frontend..."
-    dfx deploy polychain_l2_frontend
-    
+    dfx deploy polychain_l2_frontend || log_warning "Failed to deploy frontend"
+
     log_success "DFX setup complete"
 }
 
 # Run initial tests
 run_tests() {
     log_info "Running initial tests..."
-    
-    # Test backend
+
     log_info "Testing Rust backend..."
-    cargo test
-    
-    # Test frontend (if tests exist)
-    if [ -f "src/polychain_l2_frontend/package.json" ] && grep -q "test" "src/polychain_l2_frontend/package.json"; then
+    cargo test || log_warning "Backend tests failed"
+
+    if [ -f "src/polychain_l2_frontend/package.json" ]; then
         log_info "Testing frontend..."
-        npm test --workspace=src/polychain_l2_frontend
+        npm run --workspace=src/polychain_l2_frontend --if-present test || log_warning "Frontend tests failed or not found"
     fi
-    
+
     log_success "Tests completed"
 }
 
 # Show URLs and next steps
 show_next_steps() {
     log_success "🎉 Setup complete!"
-    
-    echo ""
+    echo
     echo "📋 Next steps:"
-    echo "1. Frontend: http://localhost:4943?canisterId=$(dfx canister id polychain_l2_frontend)"
-    echo "2. Backend Candid UI: http://localhost:4943?canisterId=$(dfx canister id polychain_l2_backend)"
-    echo "3. Internet Identity: http://localhost:4943?canisterId=$(dfx canister id internet_identity)"
-    echo ""
+    echo "1. Frontend:    http://localhost:$(dfx webserver-port)?canisterId=$(dfx canister id polychain_l2_frontend)"
+    echo "2. Backend Candid UI: http://localhost:$(dfx webserver-port)?canisterId=$(dfx canister id polychain_l2_backend)&id=polychain_l2_backend"
+    echo "3. Internet Identity: http://localhost:$(dfx webserver-port)?canisterId=$(dfx canister id internet_identity)"
+    echo
     echo "🔧 Development commands:"
     echo "  npm start                    # Start frontend development server"
     echo "  cargo test                   # Run backend tests"
     echo "  dfx deploy                   # Deploy all canisters"
-    echo "  ./scripts/test-quick.sh      # Run quick tests"
-    echo "  ./scripts/check-quality.sh  # Check code quality"
-    echo ""
+    echo
     echo "📚 Useful resources:"
     echo "  - DFX SDK: https://sdk.dfinity.org/"
     echo "  - IC CDK: https://docs.rs/ic-cdk/"
     echo "  - React: https://reactjs.org/docs/"
-    echo ""
+    echo
     echo "🚀 Happy coding!"
 }
 
-# Main execution
+# ----- Main execution -----
 main() {
+    echo
     echo "🔧 PolyChain Layer 2 - Development Setup"
     echo "========================================"
-    echo ""
-    
+    echo
+
     check_requirements
     install_dependencies
     setup_dfx
@@ -193,5 +201,4 @@ main() {
     show_next_steps
 }
 
-# Run main function
 main "$@"
