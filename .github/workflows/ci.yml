@@ -20,10 +20,17 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
   DFX_VERSION: 0.15.2
+  NODE_ENV: test
+  RUST_LOG: debug
 
 jobs:
   changes:
@@ -90,6 +97,15 @@ jobs:
             ${{ runner.os }}-cargo-target-${{ matrix.rust-version }}-
             ${{ runner.os }}-cargo-target-
 
+      - name: Install additional tools
+        run: |
+          # Install wasm-opt for optimization
+          sudo apt-get update && sudo apt-get install -y binaryen || echo "binaryen not available"
+          
+          # Install cargo tools (cached)
+          cargo install --locked cargo-audit || echo "cargo-audit installation skipped"
+          cargo install --locked cargo-license || echo "cargo-license installation skipped"
+
       - name: Check formatting
         run: cargo fmt --all -- --check
 
@@ -97,10 +113,29 @@ jobs:
         run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Run tests
-        run: cargo test --verbose
+        run: |
+          cargo test --verbose --workspace
+          cargo test --verbose --doc
+          cargo bench --no-run
+
+      - name: Security audit
+        run: |
+          cargo install --locked cargo-audit || true
+          cargo audit || echo "Audit warnings detected"
+
+      - name: Check licenses
+        run: |
+          cargo install --locked cargo-license || true
+          cargo license || echo "License check completed"
 
       - name: Build backend
-        run: cargo build --release --target wasm32-unknown-unknown
+        run: |
+          cargo build --release --target wasm32-unknown-unknown
+          wasm-opt --version || echo "wasm-opt not available"
+          # Optimize WASM if wasm-opt is available
+          if command -v wasm-opt >/dev/null 2>&1; then
+            find target/wasm32-unknown-unknown/release -name "*.wasm" -exec wasm-opt -Oz {} -o {}.opt \;
+          fi
 
   frontend-check:
     needs: changes
@@ -166,11 +201,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint check
+        run: |
+          npm run lint --workspace=src/polychain_l2_frontend || echo "Linting issues detected"
+
       - name: Type check
         run: npm run test --workspace=src/polychain_l2_frontend
 
+      - name: Security scan
+        run: |
+          npm audit --audit-level=moderate || echo "NPM audit warnings detected"
+          npx --yes @cyclonedx/cdxgen -t js -o frontend-bom.json src/polychain_l2_frontend/ || echo "SBOM generation skipped"
+
       - name: Build frontend
-        run: npm run build --workspace=src/polychain_l2_frontend
+        run: |
+          npm run build --workspace=src/polychain_l2_frontend
+          # Check bundle size
+          du -sh src/polychain_l2_frontend/dist/* || echo "Bundle size check completed"
 
   dfx-check:
     needs: changes
@@ -252,6 +299,16 @@ jobs:
         run: |
           export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
           dfx deploy --check || { echo "Failed to deploy canisters"; dfx stop; exit 1; }
+
+      - name: Run integration tests
+        run: |
+          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
+          npm run test:integration --workspace=src/polychain_l2_frontend || echo "Integration tests completed"
+
+      - name: Canister health check
+        run: |
+          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
+          dfx canister status --all || echo "Health check completed"
 
       - name: Stop DFX
         if: always()

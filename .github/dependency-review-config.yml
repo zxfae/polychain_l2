@@ -1,0 +1,17 @@
+# Configuration for dependency review action
+fail_on_scopes:
+  - runtime
+
+allow_dependencies_licenses:
+  - MIT
+  - Apache-2.0
+  - BSD-3-Clause
+  - BSD-2-Clause
+  - ISC
+  - MPL-2.0
+  - CC0-1.0
+
+deny_packages:
+  - "@npmcli/metavuln-calculator"
+
+comment_summary_in_pr: true

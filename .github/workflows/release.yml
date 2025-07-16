@@ -50,7 +50,22 @@ jobs:
             PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
           fi
           
-          echo "## What's Changed" > changelog.md
+          echo "## 🚀 What's Changed" > changelog.md
+          
+          # Features
+          echo "### ✨ Features" >> changelog.md
+          if [ -n "$PREVIOUS_TAG" ]; then
+            git log --pretty=format:"- %s (%h)" --grep="feat:" --grep="feature:" $PREVIOUS_TAG..HEAD >> changelog.md || echo "" >> changelog.md
+          fi
+          
+          # Bug fixes
+          echo "### 🐛 Bug Fixes" >> changelog.md
+          if [ -n "$PREVIOUS_TAG" ]; then
+            git log --pretty=format:"- %s (%h)" --grep="fix:" --grep="bug:" $PREVIOUS_TAG..HEAD >> changelog.md || echo "" >> changelog.md
+          fi
+          
+          # All changes
+          echo "### 📝 All Changes" >> changelog.md
           if [ -n "$PREVIOUS_TAG" ]; then
             git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD >> changelog.md
           else
@@ -169,11 +184,17 @@ jobs:
 
       - name: Create release artifacts
         run: |
+          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
           mkdir -p release-artifacts
           
           # Copy WASM files
           cp .dfx/local/canisters/polychain_l2_backend/polychain_l2_backend.wasm release-artifacts/
           cp .dfx/local/canisters/polychain_l2_backend/polychain_l2_backend.did release-artifacts/
+          
+          # Create optimized WASM if possible
+          if command -v wasm-opt >/dev/null 2>&1; then
+            wasm-opt -Oz release-artifacts/polychain_l2_backend.wasm -o release-artifacts/polychain_l2_backend.optimized.wasm
+          fi
           
           # Create frontend bundle
           cd src/polychain_l2_frontend
@@ -181,8 +202,24 @@ jobs:
           cd ../..
           tar -czf release-artifacts/frontend-dist.tar.gz -C src/polychain_l2_frontend/dist .
           
+          # Create development bundle
+          tar -czf release-artifacts/development-files.tar.gz --exclude=node_modules --exclude=target --exclude=.dfx --exclude=.git .
+          
           # Create source bundle
           git archive --format=tar.gz --prefix=polychain-l2-source/ HEAD > release-artifacts/source-code.tar.gz
+          
+          # Generate release info
+          echo "## 📊 Release Information" > release-artifacts/RELEASE_INFO.md
+          echo "- **Release Date**: $(date -u)" >> release-artifacts/RELEASE_INFO.md
+          echo "- **Git Commit**: $(git rev-parse HEAD)" >> release-artifacts/RELEASE_INFO.md
+          echo "- **Git Branch**: $(git branch --show-current)" >> release-artifacts/RELEASE_INFO.md
+          echo "- **DFX Version**: ${{ env.DFX_VERSION }}" >> release-artifacts/RELEASE_INFO.md
+          echo "- **Node Version**: $(node --version)" >> release-artifacts/RELEASE_INFO.md
+          echo "- **Rust Version**: $(rustc --version)" >> release-artifacts/RELEASE_INFO.md
+          
+          # File sizes
+          echo "### 📦 Artifact Sizes" >> release-artifacts/RELEASE_INFO.md
+          ls -lh release-artifacts/ >> release-artifacts/RELEASE_INFO.md
           
           # Create checksums
           cd release-artifacts

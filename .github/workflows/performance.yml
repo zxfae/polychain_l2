@@ -1,0 +1,186 @@
+name: Performance Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: performance-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  DFX_VERSION: 0.15.2
+
+jobs:
+  rust-benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      - name: Run benchmarks
+        run: |
+          cargo bench --workspace || echo "No benchmarks found"
+          
+      - name: Check binary size
+        run: |
+          cargo build --release --target wasm32-unknown-unknown
+          echo "## Binary Sizes" >> performance-report.md
+          find target/wasm32-unknown-unknown/release -name "*.wasm" -exec ls -lh {} \; >> performance-report.md
+
+      - name: Memory usage analysis
+        run: |
+          echo "## Memory Analysis" >> performance-report.md
+          cargo test --release -- --nocapture 2>&1 | grep -i "memory\|heap\|stack" >> performance-report.md || echo "No memory stats available" >> performance-report.md
+
+  frontend-performance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build --workspace=src/polychain_l2_frontend
+
+      - name: Bundle analysis
+        run: |
+          echo "## Frontend Bundle Analysis" >> frontend-performance.md
+          echo "### Bundle sizes:" >> frontend-performance.md
+          du -sh src/polychain_l2_frontend/dist/* >> frontend-performance.md || echo "No dist files found" >> frontend-performance.md
+          
+          echo "### File count:" >> frontend-performance.md
+          find src/polychain_l2_frontend/dist -type f | wc -l >> frontend-performance.md
+
+      - name: Lighthouse CI (Static)
+        run: |
+          npm install -g @lhci/cli@0.12.x || true
+          if command -v lhci >/dev/null 2>&1; then
+            lhci collect --staticDistDir=src/polychain_l2_frontend/dist --url=http://localhost/index.html || echo "Lighthouse analysis skipped"
+          else
+            echo "Lighthouse CLI not available"
+          fi
+
+      - name: Upload performance artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-reports
+          path: |
+            *performance*.md
+            .lighthouseci/
+          retention-days: 7
+
+  load-testing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache DFX
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/dfinity
+            ~/bin/dfx
+            ~/.local/bin/dfx
+            ~/.local/share/dfx
+          key: ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-${{ hashFiles('dfx.json') }}
+          restore-keys: |
+            ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-
+
+      - name: Install DFX
+        run: |
+          if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
+            echo "Installing DFX ${{ env.DFX_VERSION }}..."
+            export TERM=dumb
+            curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --yes --version ${{ env.DFX_VERSION }} > install.log 2>&1 || {
+              cat install.log
+              echo "Failed to install DFX"
+              exit 1
+            }
+            cat install.log
+          else
+            echo "DFX ${{ env.DFX_VERSION }} already installed."
+          fi
+
+      - name: Update PATH for DFX
+        run: |
+          echo "$HOME/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
+      - name: Start DFX network
+        run: |
+          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
+          dfx start --background --clean --host 127.0.0.1:4943
+          sleep 10
+
+      - name: Install dependencies and deploy
+        run: |
+          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
+          npm ci
+          npm run build --workspace=src/polychain_l2_frontend
+          dfx deploy
+
+      - name: Simple load test
+        run: |
+          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
+          echo "## Load Testing Results" >> load-test-results.md
+          
+          # Simple stress test with curl
+          for i in {1..10}; do
+            echo "Request $i:" >> load-test-results.md
+            time curl -s http://127.0.0.1:4943/ >> load-test-results.md 2>&1 || echo "Request failed" >> load-test-results.md
+          done
+
+      - name: Stop DFX
+        if: always()
+        run: |
+          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
+          dfx stop
+
+      - name: Upload load test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: load-test-results
+          path: load-test-results.md
+          retention-days: 7
