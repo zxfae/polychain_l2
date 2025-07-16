@@ -130,6 +130,39 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-${{ matrix.node-version }}-
 
+      - name: Cache DFX
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/dfinity
+            ~/bin/dfx
+            ~/.local/bin/dfx
+            ~/.local/share/dfx
+          key: ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-${{ hashFiles('dfx.json') }}
+          restore-keys: |
+            ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-
+
+      - name: Install DFX
+        run: |
+          if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
+            echo "Installing DFX ${{ env.DFX_VERSION }}..."
+            export TERM=dumb
+            curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --yes --version ${{ env.DFX_VERSION }} > install.log 2>&1 || {
+              cat install.log
+              echo "Failed to install DFX"
+              exit 1
+            }
+            cat install.log
+          else
+            echo "DFX ${{ env.DFX_VERSION }} already installed."
+          fi
+
+      - name: Update PATH for DFX
+        run: |
+          echo "$HOME/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+
       - name: Install dependencies
         run: npm ci
 
