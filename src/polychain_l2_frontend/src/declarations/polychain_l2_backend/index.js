@@ -1,0 +1,1 @@
+export const polychain_l2_backend = { greet: (name) => Promise.resolve(`Hello, ${name}!`), get_balance: (address) => Promise.resolve(1000.0), create_transaction: (sender, recipient, amount) => Promise.resolve(`Transaction created from ${sender} to ${recipient} for ${amount}`) };

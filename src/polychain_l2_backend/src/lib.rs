@@ -1,13 +1,10 @@
-use candid::{CandidType, Deserialize};
+use crypto::calculate_hash;
 use ic_cdk::*;
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct PolyTransaction {
-    pub sender: String,
-    pub recipient: String,
-    pub amount: f64,
-    pub time_stamp: i64,
-}
+mod types;
+use types::{PolyBlock, PolyTransaction};
+mod crypto;
+mod cryptographybridge;
+mod errors;
 
 #[update]
 async fn create_transaction(
@@ -15,14 +12,39 @@ async fn create_transaction(
     recipient: String,
     amount: f64,
 ) -> Result<String, String> {
-    let tx = PolyTransaction {
-        sender: sender.clone(),
-        recipient: recipient.clone(),
-        amount,
-        time_stamp: ic_cdk::api::time() as i64,
-    };
+    if amount <= 0.0 {
+        return Err("Amount must be positive".to_string());
+    }
+
+    let mut tx = PolyTransaction::new(sender, recipient, amount);
+
+    if !tx.is_valid() {
+        return Err("Invalid transaction parameters".to_string());
+    }
+
+    let tx_hash = calculate_hash(&format!("{tx:?}"));
+    tx.sign(tx_hash);
 
     Ok(format!("Transaction created: {tx:?}"))
+}
+
+#[update]
+async fn create_block(
+    transactions: Vec<PolyTransaction>,
+    previous_hash: String,
+) -> Result<String, String> {
+    if transactions.is_empty() {
+        return Err("Block must contain at least one transaction".to_string());
+    }
+
+    for tx in &transactions {
+        if !tx.is_valid() {
+            return Err("Invalid transaction in block".to_string());
+        }
+    }
+
+    let block = PolyBlock::new(transactions, previous_hash);
+    Ok(format!("Block created with hash: {}", block.hash))
 }
 
 #[query]
@@ -53,14 +75,22 @@ mod tests {
 
     #[test]
     fn test_poly_transaction() {
-        let tx = PolyTransaction {
-            sender: "alice".to_string(),
-            recipient: "bob".to_string(),
-            amount: 100.0,
-            time_stamp: 1234567890,
-        };
+        let tx = PolyTransaction::new("alice".to_string(), "bob".to_string(), 100.0);
         assert_eq!(tx.sender, "alice");
         assert_eq!(tx.recipient, "bob");
         assert_eq!(tx.amount, 100.0);
+        assert!(tx.is_valid());
+    }
+
+    #[test]
+    fn test_poly_block() {
+        let tx1 = PolyTransaction::new("alice".to_string(), "bob".to_string(), 100.0);
+        let tx2 = PolyTransaction::new("bob".to_string(), "charlie".to_string(), 50.0);
+        let transactions = vec![tx1, tx2];
+
+        let block = PolyBlock::new(transactions, "prev_hash".to_string());
+        assert_eq!(block.transactions.len(), 2);
+        assert_eq!(block.previous_hash, "prev_hash");
+        assert!(!block.hash.is_empty());
     }
 }

@@ -1,0 +1,1 @@
+export interface polychain_l2_backend { greet: (name: string) => Promise<string>; get_balance: (address: string) => Promise<number>; create_transaction: (sender: string, recipient: string, amount: number) => Promise<string>; } export const polychain_l2_backend: polychain_l2_backend;
