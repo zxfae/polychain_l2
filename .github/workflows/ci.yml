@@ -181,15 +181,18 @@ jobs:
         run: |
           if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version 2>/dev/null | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
             echo "Installing DFX ${{ env.DFX_VERSION }}..."
+            # Use non-interactive installation method
             export TERM=dumb
-            curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --yes --version ${{ env.DFX_VERSION }} > install.log 2>&1 || {
+            yes '' | curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --version ${{ env.DFX_VERSION }} > install.log 2>&1 || {
               cat install.log
-              echo "Failed to install DFX, trying alternative method..."
-              # Try alternative installation method
-              curl -fsSL https://internetcomputer.org/install.sh | TERM=dumb sh -s -- --yes --version ${{ env.DFX_VERSION }} < /dev/null || {
+              echo "First installation attempt failed, trying alternative method..."
+              # Alternative: Direct download method
+              mkdir -p "$HOME/.local/share/dfx/bin"
+              curl -fsSL "https://github.com/dfinity/sdk/releases/download/${{ env.DFX_VERSION }}/dfx-${{ env.DFX_VERSION }}-x86_64-linux.tar.gz" | tar -xzf - -C "$HOME/.local/share/dfx/bin" || {
                 echo "DFX installation failed completely"
                 exit 1
               }
+              chmod +x "$HOME/.local/share/dfx/bin/dfx"
             }
             cat install.log || true
           else
@@ -201,6 +204,8 @@ jobs:
           echo "$HOME/bin" >> $GITHUB_PATH
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+          # Also export for current session
+          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
 
       - name: Install dependencies
         run: npm ci
@@ -257,16 +262,22 @@ jobs:
 
       - name: Install DFX
         run: |
-          if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
+          if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version 2>/dev/null | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
             echo "Installing DFX ${{ env.DFX_VERSION }}..."
-            # Force non-interactive mode by setting TERM and redirecting input
+            # Use non-interactive installation method
             export TERM=dumb
-            curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --yes --version ${{ env.DFX_VERSION }} > install.log 2>&1 || {
+            yes '' | curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --version ${{ env.DFX_VERSION }} > install.log 2>&1 || {
               cat install.log
-              echo "Failed to install DFX"
-              exit 1
+              echo "First installation attempt failed, trying alternative method..."
+              # Alternative: Direct download method
+              mkdir -p "$HOME/.local/share/dfx/bin"
+              curl -fsSL "https://github.com/dfinity/sdk/releases/download/${{ env.DFX_VERSION }}/dfx-${{ env.DFX_VERSION }}-x86_64-linux.tar.gz" | tar -xzf - -C "$HOME/.local/share/dfx/bin" || {
+                echo "DFX installation failed completely"
+                exit 1
+              }
+              chmod +x "$HOME/.local/share/dfx/bin/dfx"
             }
-            cat install.log
+            cat install.log || true
           else
             echo "DFX ${{ env.DFX_VERSION }} already installed."
           fi

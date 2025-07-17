@@ -156,7 +156,18 @@ jobs:
           if ! command -v dfx >/dev/null 2>&1; then
             echo "Installing DFX..."
             export TERM=dumb
-            curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --yes --version 0.15.2
+            yes '' | curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --version 0.15.2 > install.log 2>&1 || {
+              cat install.log
+              echo "First installation attempt failed, trying alternative method..."
+              # Alternative: Direct download method
+              mkdir -p "$HOME/.local/share/dfx/bin"
+              curl -fsSL "https://github.com/dfinity/sdk/releases/download/0.15.2/dfx-0.15.2-x86_64-linux.tar.gz" | tar -xzf - -C "$HOME/.local/share/dfx/bin" || {
+                echo "DFX installation failed completely"
+                exit 1
+              }
+              chmod +x "$HOME/.local/share/dfx/bin/dfx"
+            }
+            cat install.log || true
           fi
 
       - name: Update PATH for DFX
