@@ -107,10 +107,25 @@ jobs:
           echo "Head SHA: ${{ github.event.after || github.event.pull_request.head.sha }}"
           git log --oneline -n 5
 
+      - name: Check BASE and HEAD difference
+        id: check_diff
+        run: |
+          BASE="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'push' && github.event.before || 'main' }}"
+          HEAD="${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'push' && github.event.after || 'HEAD' }}"
+          echo "BASE=$BASE" >> $GITHUB_ENV
+          echo "HEAD=$HEAD" >> $GITHUB_ENV
+          if [ "$BASE" = "$HEAD" ]; then
+            echo "BASE and HEAD are the same, skipping TruffleHog scan."
+            echo "skip_trufflehog=true" >> $GITHUB_ENV
+          else
+            echo "skip_trufflehog=false" >> $GITHUB_ENV
+          fi
+
       - name: Run TruffleHog OSS
+        if: env.skip_trufflehog == 'false'
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'push' && github.event.before || 'main' }}
-          head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'push' && github.event.after || 'HEAD' }}
+          base: ${{ env.BASE }}
+          head: ${{ env.HEAD }}
           extra_args: --debug --only-verified
