@@ -76,6 +76,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.rust-version }}
+          targets: wasm32-unknown-unknown
           components: rustfmt, clippy
 
       - name: Cache cargo registry
