@@ -24,9 +24,23 @@ impl PolyTransaction {
             sender,
             recipient,
             amount,
-            time_stamp: ic_cdk::api::time() as i64,
+            time_stamp: Self::get_current_time(),
             signature: None,
         }
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn get_current_time() -> i64 {
+        ic_cdk::api::time() as i64
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn get_current_time() -> i64 {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos() as i64
     }
 
     pub fn sign(&mut self, signature: String) {
@@ -40,7 +54,7 @@ impl PolyTransaction {
 
 impl PolyBlock {
     pub fn new(transactions: Vec<PolyTransaction>, previous_hash: String) -> Self {
-        let timestamp = ic_cdk::api::time() as i64;
+        let timestamp = Self::get_current_time();
         let mut block = Self {
             transactions,
             hash: String::new(),
@@ -52,6 +66,20 @@ impl PolyBlock {
         block
     }
 
+    #[cfg(target_arch = "wasm32")]
+    fn get_current_time() -> i64 {
+        ic_cdk::api::time() as i64
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn get_current_time() -> i64 {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos() as i64
+    }
+
     pub fn calculate_hash(&self) -> String {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
@@ -60,7 +88,7 @@ impl PolyBlock {
         self.previous_hash.hash(&mut hasher);
         self.timestamp.hash(&mut hasher);
         self.nonce.hash(&mut hasher);
-        
+
         for tx in &self.transactions {
             tx.sender.hash(&mut hasher);
             tx.recipient.hash(&mut hasher);

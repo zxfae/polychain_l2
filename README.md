@@ -27,6 +27,20 @@ PolyChain L2 combines post-quantum cryptographic innovation with ICP's decentral
 └─────────────────────────────────────┘
 ```
 
+### 🔐 Cryptography Layer
+
+**Multi-Algorithm Support:**
+- **ECDSA**: Classical elliptic curve signatures (secp256k1)
+- **Schnorr**: Compact signatures for Bitcoin compatibility
+- **Falcon (Post-Quantum)**: FIPS 205 SLH-DSA-SHA2-128f (128-bit security)
+- **ML-DSA (Post-Quantum)**: FIPS 204 ML-DSA-44 (128-bit security)
+
+**Performance Characteristics:**
+- **Classical algorithms**: ~1-5ms per operation
+- **Post-quantum algorithms**: ~10-50ms per operation
+- **Memory efficiency**: Optimized for WASM deployment
+- **Blockchain integration**: Multi-signature transaction support
+
 ## 🚀 Development Setup
 
 ### Prerequisites
@@ -127,6 +141,11 @@ After `dfx deploy`, access:
 - [x] Bitcoin integration (regtest)
 - [x] Internet Identity authentication
 - [x] Basic PolyTransaction structures
+- [x] **Comprehensive Cryptography Test Suite**
+  - [x] ECDSA, Schnorr, Falcon (Post-Quantum), ML-DSA (Post-Quantum)
+  - [x] **Performance Benchmarking** (10-iteration timing comparisons)
+  - [x] Security validation and invalid signature rejection
+  - [x] Blockchain integration testing
 
 ### 🚧 In Development
 - [ ] Complete PolyChain logic migration
@@ -201,6 +220,53 @@ cargo test
 # ICP-specific tests
 dfx test
 ```
+
+### Cryptography Testing
+
+```bash
+# Run all cryptography tests
+cargo test cryptography
+
+# Performance benchmarking (recommended)
+cargo test --release performance
+
+# Specific performance comparison test
+cargo test test_cryptography_performance_comparison --release
+
+# Individual algorithm tests
+cargo test ecdsa
+cargo test schnorr
+cargo test falcon
+cargo test mldsa
+
+# Debug mode with detailed output
+RUST_LOG=debug cargo test cryptography -- --nocapture
+```
+
+#### 🔐 Cryptography Performance Tests
+
+Our comprehensive cryptography test suite includes performance benchmarking for all supported algorithms:
+
+```bash
+# Run performance comparison tests
+cargo test test_cryptography_performance_comparison --release
+
+# Run all cryptography tests with timing
+cargo test cryptography --release -- --nocapture
+
+# Performance test results include:
+# - ECDSA: Key generation + signing + verification timing
+# - Schnorr: Compact signature performance
+# - Falcon (Post-Quantum): FIPS 205 SLH-DSA-SHA2-128f performance
+# - ML-DSA (Post-Quantum): FIPS 204 ML-DSA-44 performance
+```
+
+**Performance Test Features:**
+- **10-iteration benchmarks** for statistical accuracy
+- **Comparative timing analysis** between classical and post-quantum algorithms
+- **Memory efficiency testing** (key and signature sizes)
+- **Blockchain integration performance** testing
+- **Security validation** with invalid signature rejection tests
 
 ## 🛠️ Troubleshooting
 
