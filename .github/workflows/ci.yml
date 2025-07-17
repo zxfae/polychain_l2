@@ -321,7 +321,7 @@ jobs:
       - name: Deploy canisters
         run: |
           export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
-          dfx deploy --check || { echo "Failed to deploy canisters"; dfx stop; exit 1; }
+          dfx deploy || { echo "Failed to deploy canisters"; dfx stop; exit 1; }
 
       - name: Run integration tests
         run: |
