@@ -116,7 +116,7 @@ jobs:
       - name: Run tests
         run: |
           cargo test --verbose --workspace
-          cargo test --verbose --doc
+          # Doc tests not supported for cdylib canisters
           cargo bench --no-run
 
       - name: Security audit
