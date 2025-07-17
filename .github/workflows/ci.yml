@@ -179,15 +179,19 @@ jobs:
 
       - name: Install DFX
         run: |
-          if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
+          if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version 2>/dev/null | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
             echo "Installing DFX ${{ env.DFX_VERSION }}..."
             export TERM=dumb
-            curl -fsSL https://internetcomputer.org/install.sh | TERM=dumb sh -s -- --yes --version ${{ env.DFX_VERSION }} < /dev/null > install.log 2>&1 || {
+            curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --yes --version ${{ env.DFX_VERSION }} > install.log 2>&1 || {
               cat install.log
-              echo "Failed to install DFX"
-              exit 1
+              echo "Failed to install DFX, trying alternative method..."
+              # Try alternative installation method
+              curl -fsSL https://internetcomputer.org/install.sh | TERM=dumb sh -s -- --yes --version ${{ env.DFX_VERSION }} < /dev/null || {
+                echo "DFX installation failed completely"
+                exit 1
+              }
             }
-            cat install.log
+            cat install.log || true
           else
             echo "DFX ${{ env.DFX_VERSION }} already installed."
           fi
@@ -285,9 +289,17 @@ jobs:
       - name: Check DFX network
         run: |
           export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
-          dfx start --background --clean --host 127.0.0.1:4943
-          sleep 10
-          dfx ping || { echo "DFX network is not responding"; dfx stop; exit 1; }
+          dfx start --background --clean --host 127.0.0.1:4943 || { echo "Failed to start DFX"; exit 1; }
+          sleep 15
+          # Try multiple times to ping
+          for i in {1..5}; do
+            if dfx ping; then
+              echo "DFX network is responding"
+              break
+            fi
+            echo "Ping attempt $i failed, retrying..."
+            sleep 5
+          done || { echo "DFX network is not responding after multiple attempts"; dfx stop; exit 1; }
 
       - name: Install dependencies
         run: npm ci

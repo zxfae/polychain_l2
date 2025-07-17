@@ -29,3 +29,38 @@ async fn create_transaction(
 fn get_balance(address: String) -> f64 {
     1000.0
 }
+
+#[query]
+fn greet(name: String) -> String {
+    format!("Hello, {}!", name)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_greet() {
+        let result = greet("World".to_string());
+        assert_eq!(result, "Hello, World!");
+    }
+
+    #[test]
+    fn test_get_balance() {
+        let balance = get_balance("some_address".to_string());
+        assert_eq!(balance, 1000.0);
+    }
+
+    #[test]
+    fn test_poly_transaction() {
+        let tx = PolyTransaction {
+            sender: "alice".to_string(),
+            recipient: "bob".to_string(),
+            amount: 100.0,
+            time_stamp: 1234567890,
+        };
+        assert_eq!(tx.sender, "alice");
+        assert_eq!(tx.recipient, "bob");
+        assert_eq!(tx.amount, 100.0);
+    }
+}

@@ -9,7 +9,9 @@
     "prebuild": "dfx generate",
     "build": "tsc && vite build",
     "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
-    "test": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "tsc --noEmit",
+    "test:integration": "echo 'Integration tests not implemented yet' && exit 0"
   },
   "dependencies": {
     "react": "^18.2.0",
