@@ -15,7 +15,7 @@ This guide provides comprehensive instructions for running tests in the PolyChai
 
 ## Prerequisites
 
-Before running tests, ensure you have the following installed:
+Before running tests ensure you have the following installed:
 
 ### Required Tools
 - **Rust** (stable version): `rustup install stable && rustup default stable`
