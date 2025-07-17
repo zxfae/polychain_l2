@@ -6,7 +6,7 @@
   "scripts": {
     "setup": "npm i && dfx canister create polychain_l2_backend && dfx generate polychain_l2_backend && dfx deploy",
     "start": "vite --port 3000",
-    "prebuild": "dfx generate || (echo 'DFX not available, creating fallback declarations' && mkdir -p src/declarations && echo 'export const polychain_l2_backend = { greet: () => \"Hello from fallback!\" };' > src/declarations/polychain_l2_backend/index.js)",
+    "prebuild": "dfx generate || (echo 'DFX not available, creating fallback declarations' && mkdir -p src/declarations/polychain_l2_backend && echo 'export const polychain_l2_backend = { greet: (name) => Promise.resolve(`Hello, ${name}!`), get_balance: (address) => Promise.resolve(1000.0), create_transaction: (sender, recipient, amount) => Promise.resolve(`Transaction created from ${sender} to ${recipient} for ${amount}`) };' > src/declarations/polychain_l2_backend/index.js && echo 'export interface polychain_l2_backend { greet: (name: string) => Promise<string>; get_balance: (address: string) => Promise<number>; create_transaction: (sender: string, recipient: string, amount: number) => Promise<string>; } export const polychain_l2_backend: polychain_l2_backend;' > src/declarations/polychain_l2_backend/index.d.ts)",
     "build": "tsc && vite build",
     "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
     "lint": "tsc --noEmit",

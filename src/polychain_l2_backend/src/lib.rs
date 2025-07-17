@@ -26,7 +26,7 @@ async fn create_transaction(
 }
 
 #[query]
-fn get_balance(address: String) -> f64 {
+fn get_balance(_address: String) -> f64 {
     1000.0
 }
 
