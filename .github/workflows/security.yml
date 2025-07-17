@@ -92,19 +92,25 @@ jobs:
           path: frontend-sbom.json
           retention-days: 30
 
-
   secrets-scan:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Full history for commit range scanning
+
+      - name: Debug Commit Info
+        run: |
+          echo "Event: ${{ github.event_name }}"
+          echo "Base SHA: ${{ github.event.before || github.event.pull_request.base.sha }}"
+          echo "Head SHA: ${{ github.event.after || github.event.pull_request.head.sha }}"
+          git log --oneline -n 5
 
       - name: Run TruffleHog OSS
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: main
-          head: HEAD
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'push' && github.event.before || 'main' }}
+          head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'push' && github.event.after || 'HEAD' }}
           extra_args: --debug --only-verified
