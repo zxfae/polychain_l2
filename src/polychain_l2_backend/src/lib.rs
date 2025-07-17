@@ -32,7 +32,7 @@ fn get_balance(_address: String) -> f64 {
 
 #[query]
 fn greet(name: String) -> String {
-    format!("Hello, {}!", name)
+    format!("Hello, {name}!")
 }
 
 #[cfg(test)]
