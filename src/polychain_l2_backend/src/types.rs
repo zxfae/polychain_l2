@@ -60,7 +60,7 @@ impl PolyBlock {
         self.previous_hash.hash(&mut hasher);
         self.timestamp.hash(&mut hasher);
         self.nonce.hash(&mut hasher);
-        
+
         for tx in &self.transactions {
             tx.sender.hash(&mut hasher);
             tx.recipient.hash(&mut hasher);
