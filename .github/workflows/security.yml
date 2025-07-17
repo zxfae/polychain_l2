@@ -92,19 +92,40 @@ jobs:
           path: frontend-sbom.json
           retention-days: 30
 
-
   secrets-scan:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Full history for commit range scanning
+
+      - name: Debug Commit Info
+        run: |
+          echo "Event: ${{ github.event_name }}"
+          echo "Base SHA: ${{ github.event.before || github.event.pull_request.base.sha }}"
+          echo "Head SHA: ${{ github.event.after || github.event.pull_request.head.sha }}"
+          git log --oneline -n 5
+
+      - name: Check BASE and HEAD difference
+        id: check_diff
+        run: |
+          BASE="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'push' && github.event.before || 'main' }}"
+          HEAD="${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'push' && github.event.after || 'HEAD' }}"
+          echo "BASE=$BASE" >> $GITHUB_ENV
+          echo "HEAD=$HEAD" >> $GITHUB_ENV
+          if [ "$BASE" = "$HEAD" ]; then
+            echo "BASE and HEAD are the same, skipping TruffleHog scan."
+            echo "skip_trufflehog=true" >> $GITHUB_ENV
+          else
+            echo "skip_trufflehog=false" >> $GITHUB_ENV
+          fi
 
       - name: Run TruffleHog OSS
+        if: env.skip_trufflehog == 'false'
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: main
-          head: HEAD
+          base: ${{ env.BASE }}
+          head: ${{ env.HEAD }}
           extra_args: --debug --only-verified
