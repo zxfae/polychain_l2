@@ -7,6 +7,7 @@ pub fn calculate_hash(data: &str) -> String {
     format!("{:x}", hasher.finish())
 }
 
+/*
 pub fn calculate_merkle_root(hashes: &[String]) -> String {
     if hashes.is_empty() {
         return String::new();
@@ -35,3 +36,4 @@ pub fn calculate_merkle_root(hashes: &[String]) -> String {
 
     current_level[0].clone()
 }
+*/
