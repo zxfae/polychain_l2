@@ -1,0 +1,370 @@
+/* CryptoAI Component Styles */
+.crypto-ai {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.crypto-ai-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.ai-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: var(--neutral-50);
+}
+
+.ai-title h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.crypto-ai-header p {
+  color: var(--neutral-300);
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto;
+  font-weight: 400;
+}
+
+.crypto-ai-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 2rem;
+  grid-template-areas:
+    "controls recommendation"
+    "threat threat";
+}
+
+.control-panel {
+  grid-area: controls;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-md);
+}
+
+.recommendation-panel {
+  grid-area: recommendation;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-md);
+}
+
+.threat-monitor {
+  grid-area: threat;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-md);
+}
+
+.crypto-ai-grid h3 {
+  color: var(--neutral-50);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  letter-spacing: -0.025em;
+}
+
+/* Control Panel Styles */
+.control-group {
+  margin-bottom: 1.5rem;
+}
+
+.control-group label {
+  display: block;
+  color: var(--neutral-200);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.control-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: var(--glass-medium);
+  color: var(--neutral-50);
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.control-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.control-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--neutral-600);
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.control-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.control-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--neutral-400);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-blue);
+}
+
+.refresh-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--accent-blue);
+  color: var(--neutral-50);
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.refresh-button:hover:not(:disabled) {
+  background: var(--accent-teal);
+}
+
+.refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Recommendation Panel Styles */
+.recommendation-card {
+  background: var(--glass-light);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.algorithm-recommendation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.algorithm-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--neutral-50);
+}
+
+.security-rating {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.recommendation-metrics {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.metric {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--neutral-300);
+  font-size: 0.875rem;
+}
+
+.recommendation-reason {
+  margin-bottom: 1.5rem;
+}
+
+.recommendation-reason p {
+  color: var(--neutral-200);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.alternatives h4 {
+  color: var(--neutral-50);
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.alternative-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.alternative-chip {
+  background: var(--glass-medium);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--neutral-300);
+}
+
+/* Threat Monitor Styles */
+.threat-indicators {
+  space-y: 1.5rem;
+}
+
+.threat-gauge {
+  margin-bottom: 1.5rem;
+}
+
+.gauge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.gauge-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--neutral-50);
+  font-weight: 500;
+}
+
+.gauge-value {
+  color: var(--neutral-50);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.gauge-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--neutral-600);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gauge-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.security-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.security-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metric-label {
+  color: var(--neutral-400);
+  font-size: 0.875rem;
+}
+
+.metric-value {
+  color: var(--neutral-50);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.adaptive-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--neutral-300);
+  font-size: 0.875rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .crypto-ai {
+    padding: 1rem;
+  }
+  
+  .crypto-ai-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "controls"
+      "recommendation"
+      "threat";
+  }
+  
+  .recommendation-metrics {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .security-metrics {
+    grid-template-columns: 1fr;
+  }
+}
