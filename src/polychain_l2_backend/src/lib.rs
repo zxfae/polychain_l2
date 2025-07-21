@@ -215,8 +215,7 @@ async fn deposit_bitcoin_with_crypto(
             .deposit_bitcoin(address.clone(), amount_satoshi);
         let algo_name = algorithm_to_string(&selected_algo);
         Ok(format!(
-            "{} | Crypto: {} | Risk: {:?} | Quantum: {}",
-            result, algo_name, risk_level, quantum_threat
+            "{result} | Crypto: {algo_name} | Risk: {risk_level:?} | Quantum: {quantum_threat}",
         ))
     })
 }
@@ -294,9 +293,7 @@ async fn withdraw_bitcoin_adaptive(
             .withdraw_bitcoin(address, amount_satoshi, crypto_algo);
 
         Ok(format!(
-            "Adaptive withdrawal: {} satoshi | Crypto: {} | Risk: {:?} | Quantum: {} | TxID: {}",
-            amount_satoshi, crypto_algo, risk_level, quantum_threat, result
-        ))
+            "Adaptive withdrawal: {amount_satoshi} satoshi | Crypto: {crypto_algo} | Risk: {risk_level:?} | Quantum: {quantum_threat} | TxID: {result}"        ))
     })
 }
 
@@ -333,7 +330,7 @@ fn get_crypto_recommendation(
 
     CryptoRecommendation {
         recommended_algorithm: algorithm_to_string(&selected_algo),
-        risk_level: format!("{:?}", risk_level),
+        risk_level: format!("{risk_level:?}"),
         quantum_threat_level: quantum_threat_level.unwrap_or(calculate_quantum_threat_level()),
         efficiency_score: efficiency,
         security_rating: security_rating.to_string(),
@@ -426,7 +423,7 @@ fn get_layer2_advanced_metrics() -> Layer2AdvancedMetrics {
 
 fn calculate_quantum_threat_level() -> u8 {
     // Simuler une évaluation de menace quantique basée sur le temps
-    let current_time = ic_cdk::api::time() as u64;
+    let current_time = ic_cdk::api::time();
     let base_threat = 25; // Niveau de base
     let time_factor = (current_time / 1_000_000_000) % 50; // Variation temporelle
     (base_threat + time_factor as u8).min(100)
@@ -450,7 +447,7 @@ fn calculate_security_score(vault: &bitcoin_vault::BitcoinVault) -> f64 {
         score += 15.0;
     }
 
-    score.min(100.0).max(0.0)
+    score.clamp(100.0, 0.0)
 }
 
 fn calculate_crypto_efficiency() -> CryptoEfficiency {
