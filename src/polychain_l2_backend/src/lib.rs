@@ -15,13 +15,13 @@ fn custom_getrandom(buf: &mut [u8]) -> Result<(), getrandom::Error> {
     // Use IC's time-based entropy for randomness
     let time = ic_cdk::api::time();
     let mut seed = time.to_le_bytes();
-    
+
     // Simple PRNG based on time and position
     for (i, byte) in buf.iter_mut().enumerate() {
         seed[i % 8] = seed[i % 8].wrapping_add((i as u64).wrapping_mul(time) as u8);
         *byte = seed[i % 8];
     }
-    
+
     Ok(())
 }
 
@@ -128,7 +128,7 @@ impl Default for CryptoPolicy {
 }
 
 fn select_crypto_algorithm(
-    amount_satoshi: u64, 
+    amount_satoshi: u64,
     risk_level: RiskLevel,
     quantum_threat: bool,
     policy: &CryptoPolicy,
@@ -140,7 +140,9 @@ fn select_crypto_algorithm(
             // Petits montants + menace quantique = ML-DSA44
             (_, true, _) => CryptoAlgorithm::Mldsa44,
             // Gros montants classiques = Schnorr
-            (n, false, RiskLevel::High | RiskLevel::Critical) if n > 50_000 => CryptoAlgorithm::Schnorr,
+            (n, false, RiskLevel::High | RiskLevel::Critical) if n > 50_000 => {
+                CryptoAlgorithm::Schnorr
+            }
             // Défaut rapide = ECDSA
             _ => CryptoAlgorithm::Ecdsa,
         }
@@ -176,7 +178,7 @@ async fn deposit_bitcoin(address: String, amount_satoshi: u64) -> Result<String,
 
 #[update]
 async fn deposit_bitcoin_with_crypto(
-    address: String, 
+    address: String,
     amount_satoshi: u64,
     crypto_algorithm: Option<String>,
     quantum_threat_level: Option<u8>,
@@ -194,7 +196,7 @@ async fn deposit_bitcoin_with_crypto(
     };
 
     let quantum_threat = quantum_threat_level.unwrap_or(0) > 50;
-    
+
     let selected_algo = if let Some(algo_str) = crypto_algorithm {
         match algo_str.to_lowercase().as_str() {
             "ecdsa" => CryptoAlgorithm::Ecdsa,
@@ -208,10 +210,14 @@ async fn deposit_bitcoin_with_crypto(
     };
 
     BITCOIN_VAULT.with(|vault| {
-        let result = vault.borrow_mut().deposit_bitcoin(address.clone(), amount_satoshi);
+        let result = vault
+            .borrow_mut()
+            .deposit_bitcoin(address.clone(), amount_satoshi);
         let algo_name = algorithm_to_string(&selected_algo);
-        Ok(format!("{} | Crypto: {} | Risk: {:?} | Quantum: {}", 
-            result, algo_name, risk_level, quantum_threat))
+        Ok(format!(
+            "{} | Crypto: {} | Risk: {:?} | Quantum: {}",
+            result, algo_name, risk_level, quantum_threat
+        ))
     })
 }
 
@@ -268,7 +274,7 @@ async fn withdraw_bitcoin_adaptive(
     };
 
     let quantum_threat = quantum_threat_level.unwrap_or(0) > 50;
-    
+
     let selected_algo = if auto_select_crypto {
         select_crypto_algorithm(amount_satoshi, risk_level, quantum_threat, &policy)
     } else {
@@ -282,11 +288,11 @@ async fn withdraw_bitcoin_adaptive(
             CryptoAlgorithm::Falcon512 => "Falcon512",
             CryptoAlgorithm::Mldsa44 => "ML-DSA44",
         };
-        
+
         let result = vault
             .borrow_mut()
             .withdraw_bitcoin(address, amount_satoshi, crypto_algo);
-        
+
         Ok(format!(
             "Adaptive withdrawal: {} satoshi | Crypto: {} | Risk: {:?} | Quantum: {} | TxID: {}",
             amount_satoshi, crypto_algo, risk_level, quantum_threat, result
@@ -306,7 +312,7 @@ fn get_crypto_recommendation(
         performance_priority: performance_priority.unwrap_or(true),
         min_security_level: RiskLevel::Medium,
     };
-    
+
     let risk_level = match amount_satoshi {
         n if n > 1_000_000 => RiskLevel::Critical,
         n if n > 100_000 => RiskLevel::High,
@@ -315,8 +321,9 @@ fn get_crypto_recommendation(
     };
 
     let quantum_threat = quantum_threat_level.unwrap_or(0) > 50;
-    let selected_algo = select_crypto_algorithm(amount_satoshi, risk_level, quantum_threat, &policy);
-    
+    let selected_algo =
+        select_crypto_algorithm(amount_satoshi, risk_level, quantum_threat, &policy);
+
     let (efficiency, security_rating) = match selected_algo {
         CryptoAlgorithm::Ecdsa => (95.5, "Good"),
         CryptoAlgorithm::Schnorr => (92.8, "Good"),
@@ -335,7 +342,11 @@ fn get_crypto_recommendation(
     }
 }
 
-fn generate_recommendation_reason(algo: &CryptoAlgorithm, risk: &RiskLevel, quantum: bool) -> String {
+fn generate_recommendation_reason(
+    algo: &CryptoAlgorithm,
+    risk: &RiskLevel,
+    quantum: bool,
+) -> String {
     match (algo, risk, quantum) {
         (CryptoAlgorithm::Falcon512, _, true) => "High quantum threat detected - Falcon512 provides maximum post-quantum security".to_string(),
         (CryptoAlgorithm::Mldsa44, _, true) => "Moderate quantum threat - ML-DSA44 offers good post-quantum protection with better performance".to_string(),
@@ -385,16 +396,16 @@ fn get_performance_metrics() -> PerformanceMetrics {
 fn get_layer2_advanced_metrics() -> Layer2AdvancedMetrics {
     BITCOIN_VAULT.with(|vault| {
         let vault_ref = vault.borrow();
-        
+
         // Simuler détection de menaces quantiques
         let quantum_threat_level = calculate_quantum_threat_level();
-        
+
         // Calculer scores de sécurité
         let security_score = calculate_security_score(&vault_ref);
-        
+
         // Efficacité crypto
         let crypto_efficiency = calculate_crypto_efficiency();
-        
+
         Layer2AdvancedMetrics {
             quantum_threat_level,
             security_score,
@@ -405,7 +416,8 @@ fn get_layer2_advanced_metrics() -> Layer2AdvancedMetrics {
             adaptive_security_enabled: true,
             migration_readiness: 85.0,
             total_quantum_transactions: vault_ref.transaction_count / 4, // 25% quantum
-            total_classical_transactions: vault_ref.transaction_count - (vault_ref.transaction_count / 4),
+            total_classical_transactions: vault_ref.transaction_count
+                - (vault_ref.transaction_count / 4),
             avg_risk_level: "Medium".to_string(),
             performance_impact_quantum: 15.2, // 15.2% plus lent
         }
@@ -422,22 +434,22 @@ fn calculate_quantum_threat_level() -> u8 {
 
 fn calculate_security_score(vault: &bitcoin_vault::BitcoinVault) -> f64 {
     let mut score: f64 = 100.0;
-    
+
     // Pénalité si trop de transactions classiques
     if vault.transaction_count > 1000 {
         score -= 5.0;
     }
-    
+
     // Bonus pour diversité des réserves
     if vault.native_reserves.len() > 5 && vault.wrapped_balances.len() > 5 {
         score += 10.0;
     }
-    
+
     // Score basé sur le total des dépôts
     if vault.total_deposits > 1_000_000 {
         score += 15.0;
     }
-    
+
     score.min(100.0).max(0.0)
 }
 
@@ -464,7 +476,7 @@ async fn crypto_algorithm_benchmark(
     };
 
     let data = message.as_bytes();
-    
+
     // Use actual timing for real benchmark measurements
     let start_time = ic_cdk::api::time();
 
