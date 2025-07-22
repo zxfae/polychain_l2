@@ -7,6 +7,7 @@ pub struct PolyTransaction {
     pub amount: f64,
     pub time_stamp: i64,
     pub signature: Option<String>,
+    pub hash: Option<String>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -26,6 +27,7 @@ impl PolyTransaction {
             amount,
             time_stamp: Self::get_current_time(),
             signature: None,
+            hash: None,
         }
     }
 

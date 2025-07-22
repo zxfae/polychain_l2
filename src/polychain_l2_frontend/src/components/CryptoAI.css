@@ -1,356 +1,375 @@
-/* CryptoAI Component Styles */
-.crypto-ai {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+/* --- CryptoAI Component Styles :: v2.4 PROFESSIONAL --- */
+
+/* ==========================================================================
+   Variables
+   ========================================================================== */
+:root {
+  /* Colors */
+  --threat-level-low: #15803d;      /* Forest green for low threat */
+  --threat-level-medium: #b45309;   /* Bronze for medium threat */
+  --threat-level-high: #991b1b;     /* Bordeaux for high threat */
+  --threat-panel-bg: rgba(153, 27, 27, 0.12); /* Subtle bordeaux tint */
+  --threat-panel-border: rgba(153, 27, 27, 0.35);
+  --accent-glow: #1e40af;          /* Deep tech blue for highlights */
+  --glass-bg: rgba(17, 24, 39, 0.7); /* Refined frosted glass */
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --gradient-primary: linear-gradient(135deg, #1e40af, #15803d 50%, #4ade80);
+  --neutral-50: #f9fafb;           /* Light text for high contrast */
+  --neutral-200: #d4d4d8;          /* Soft gray for secondary text */
+  --neutral-700: #3f3f46;          /* Dark gray for backgrounds */
+  --neutral-800: #18181b;          /* Deep anthracite for depth */
+
+  /* Shadows and Transitions */
+  --shadow-glow: 0 0 12px rgba(30, 64, 175, 0.4);
+  --shadow-soft: 0 4px 10px rgba(0, 0, 0, 0.25);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Typography */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Montserrat', sans-serif; /* Professional yet modern */
+  --scanline-bg: linear-gradient(
+    0deg,
+    rgba(17, 24, 39, 0) 0%,
+    rgba(17, 24, 39, 0.15) 50%,
+    rgba(17, 24, 39, 0) 100%
+  );
 }
 
+/* ==========================================================================
+   Base Container
+   ========================================================================== */
+.crypto-ai {
+  padding: 3rem 1.5rem;
+  max-width: 1440px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, var(--glass-bg), rgba(21, 128, 61, 0.12));
+  border-radius: 16px;
+  font-family: var(--font-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
 .crypto-ai-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 3.5rem;
+  animation: fadeIn 0.8s var(--transition-smooth);
 }
 
 .ai-title {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-  color: var(--neutral-50);
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.ai-title .icon {
+  color: var(--accent-glow);
+  font-size: 2.25rem;
+  filter: drop-shadow(0 0 8px var(--accent-glow));
+  transition: var(--transition-smooth);
 }
 
 .ai-title h2 {
-  font-size: 2rem;
-  font-weight: 600;
-  margin: 0;
-  letter-spacing: -0.025em;
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--neutral-50);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
 }
 
 .crypto-ai-header p {
-  color: var(--neutral-300);
-  font-size: 1.1rem;
-  max-width: 600px;
+  color: var(--neutral-200);
+  font-size: 1.125rem;
+  max-width: 680px;
   margin: 0 auto;
-  font-weight: 400;
+  line-height: 1.75;
+  opacity: 0.9;
 }
 
+/* ==========================================================================
+   Grid Layout
+   ========================================================================== */
 .crypto-ai-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
+  grid-template-columns: 1fr 1.3fr;
   gap: 2rem;
   grid-template-areas:
     "controls recommendation"
     "threat threat";
 }
 
-.control-panel {
-  grid-area: controls;
+/* ==========================================================================
+   Panel Base
+   ========================================================================== */
+.ai-panel {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 1.5rem;
+  border-radius: 14px;
+  padding: 2rem;
   backdrop-filter: blur(16px);
-  box-shadow: var(--shadow-md);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-soft);
+  transition: var(--transition-smooth);
 }
 
-.recommendation-panel {
-  grid-area: recommendation;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 1.5rem;
-  backdrop-filter: blur(16px);
-  box-shadow: var(--shadow-md);
-}
-
-.threat-monitor {
-  grid-area: threat;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 1.5rem;
-  backdrop-filter: blur(16px);
-  box-shadow: var(--shadow-md);
-}
-
-.crypto-ai-grid h3 {
+.ai-panel h3 {
+  font-family: var(--font-display);
   color: var(--neutral-50);
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   font-weight: 600;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  letter-spacing: -0.025em;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 1rem;
 }
 
-/* Control Panel Styles */
+/* ==========================================================================
+   Control Panel
+   ========================================================================== */
+.control-panel {
+  grid-area: controls;
+  animation: fadeIn 0.7s var(--transition-smooth) 0.1s forwards;
+}
+
+.control-panel::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--gradient-primary);
+  opacity: 0.1;
+  transition: var(--transition-smooth);
+}
+
+.control-panel:hover::before,
+.control-panel:focus-within::before {
+  opacity: 0.25;
+}
+
 .control-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
 }
 
 .control-group label {
-  display: block;
-  color: var(--neutral-200);
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
-.control-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
-  background: var(--glass-medium);
   color: var(--neutral-50);
+  font-weight: 600;
   font-size: 1rem;
-  transition: border-color 0.3s ease;
-}
-
-.control-input:focus {
-  outline: none;
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  margin-bottom: 0.75rem;
+  display: block;
 }
 
 .control-slider {
-  width: 100%;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--neutral-600);
-  outline: none;
+  -webkit-appearance: none;
   appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--neutral-700);
+  outline: none;
   cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.control-slider:focus {
+  outline: 2px solid var(--accent-glow);
+  outline-offset: 2px;
 }
 
 .control-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
   appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: var(--accent-blue);
+  background: var(--neutral-50);
+  border: 2px solid var(--accent-glow);
+  box-shadow: var(--shadow-glow);
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: var(--transition-smooth);
 }
 
-.control-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--accent-blue);
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.slider-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--neutral-400);
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent-blue);
+.control-slider:hover::-webkit-slider-thumb,
+.control-slider:focus::-webkit-slider-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 
 .refresh-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 0.75rem;
   width: 100%;
-  padding: 0.75rem;
-  background: var(--accent-blue);
+  padding: 0.875rem;
+  background: var(--accent-glow);
   color: var(--neutral-50);
   border: none;
   border-radius: 8px;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: var(--transition-smooth);
+  box-shadow: var(--shadow-soft);
 }
 
-.refresh-button:hover:not(:disabled) {
-  background: var(--accent-teal);
+.refresh-button:focus {
+  outline: 2px solid var(--neutral-50);
+  outline-offset: 2px;
 }
 
-.refresh-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.refresh-button .icon {
+  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
 
-/* Recommendation Panel Styles */
+.refresh-button:hover:not(:disabled),
+.refresh-button:focus:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+  filter: brightness(1.05);
+}
+
+.refresh-button:hover:not(:disabled) .icon {
+  transform: rotate(360deg);
+}
+
+/* ==========================================================================
+   Recommendation Panel
+   ========================================================================== */
+.recommendation-panel {
+  grid-area: recommendation;
+  animation: fadeIn 0.7s var(--transition-smooth) 0.2s forwards;
+}
+
 .recommendation-card {
-  background: var(--glass-light);
+  background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 1.5rem;
+  transition: var(--transition-smooth);
 }
 
-.algorithm-recommendation {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+.recommendation-card:hover,
+.recommendation-card:focus-within {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-glow);
 }
 
 .algorithm-name {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
   color: var(--neutral-50);
+  text-shadow: 0 0 6px rgba(30, 64, 175, 0.3);
 }
 
 .security-rating {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.05rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  display: inline-block;
 }
 
-.recommendation-metrics {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+.security-rating.high {
+  background: rgba(21, 128, 61, 0.25);
+  color: var(--threat-level-low);
 }
 
-.metric {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--neutral-300);
-  font-size: 0.875rem;
+.security-rating.medium {
+  background: rgba(180, 83, 9, 0.25);
+  color: var(--threat-level-medium);
 }
 
-.recommendation-reason {
-  margin-bottom: 1.5rem;
+.security-rating.low {
+  background: rgba(153, 27, 27, 0.25);
+  color: var(--threat-level-high);
 }
 
-.recommendation-reason p {
-  color: var(--neutral-200);
-  line-height: 1.6;
-  margin: 0;
+/* ==========================================================================
+   Threat Monitor
+   ========================================================================== */
+.threat-monitor {
+  grid-area: threat;
+  background: var(--threat-panel-bg);
+  border-color: var(--threat-panel-border);
+  animation: fadeIn 0.7s var(--transition-smooth) 0.3s forwards;
+  position: relative;
+  overflow: hidden;
 }
 
-.alternatives h4 {
-  color: var(--neutral-50);
-  font-size: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.alternative-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.alternative-chip {
-  background: var(--glass-medium);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.875rem;
-  color: var(--neutral-300);
-}
-
-/* Threat Monitor Styles */
-.threat-indicators {
-  space-y: 1.5rem;
-}
-
-.threat-gauge {
-  margin-bottom: 1.5rem;
-}
-
-.gauge-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.gauge-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--neutral-50);
-  font-weight: 500;
-}
-
-.gauge-value {
-  color: var(--neutral-50);
-  font-weight: 600;
-  font-size: 1.1rem;
+.threat-monitor::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--scanline-bg);
+  background-size: 100% 10px;
+  opacity: 0.4;
+  animation: scan 3.5s linear infinite;
 }
 
 .gauge-bar {
   width: 100%;
-  height: 8px;
-  background: var(--neutral-600);
-  border-radius: 4px;
+  height: 10px;
+  background: var(--neutral-800);
+  border-radius: 5px;
   overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .gauge-fill {
   height: 100%;
-  border-radius: 4px;
-  transition: width 0.3s ease;
+  border-radius: 5px;
+  transition: width 0.5s var(--transition-smooth), background-color 0.4s ease;
+  background: var(--gradient-primary);
 }
 
-.security-metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+.gauge-fill.medium {
+  background: linear-gradient(90deg, var(--threat-level-medium), var(--threat-level-high));
 }
 
-.security-metric {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.metric-label {
-  color: var(--neutral-400);
-  font-size: 0.875rem;
+.gauge-fill.high {
+  background: var(--threat-level-high);
 }
 
 .metric-value {
   color: var(--neutral-50);
   font-weight: 600;
   font-size: 1.1rem;
+  animation: dataFlicker 3s infinite alternate ease-in-out;
+  animation-delay: calc(var(--i, 0) * 200ms);
 }
 
-.adaptive-features {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+@keyframes scan {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 40px; }
 }
 
-.feature {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--neutral-300);
-  font-size: 0.875rem;
+@keyframes dataFlicker {
+  0%, 100% { opacity: 1; text-shadow: 0 0 5px var(--accent-glow); }
+  50% { opacity: 0.75; text-shadow: none; }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .crypto-ai {
-    padding: 1rem;
-  }
-  
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+@media (max-width: 1024px) {
   .crypto-ai-grid {
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -358,13 +377,64 @@
       "recommendation"
       "threat";
   }
-  
-  .recommendation-metrics {
-    flex-direction: column;
-    gap: 0.5rem;
+  .ai-title h2 {
+    font-size: 1.875rem;
   }
-  
-  .security-metrics {
-    grid-template-columns: 1fr;
+}
+
+@media (max-width: 768px) {
+  .crypto-ai {
+    padding: 1.5rem 1rem;
+    border-radius: 10px;
+  }
+  .ai-title h2 {
+    font-size: 1.5rem;
+  }
+  .crypto-ai-header p {
+    font-size: 1rem;
+  }
+  .ai-panel {
+    padding: 1.25rem;
+  }
+}
+
+/* ==========================================================================
+   Accessibility Enhancements
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .refresh-button .icon,
+  .control-slider,
+  .recommendation-card,
+  .metric-value,
+  .crypto-ai-header,
+  .control-panel,
+  .recommendation-panel,
+  .threat-monitor {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .ai-title h2,
+  .ai-panel h3,
+  .control-group label,
+  .refresh-button,
+  .metric-value,
+  .algorithm-name {
+    color: #ffffff;
+    text-shadow: none;
+  }
+  .security-rating.high {
+    background: var(--threat-level-low);
+    color: #000000;
+  }
+  .security-rating.medium {
+    background: var(--threat-level-medium);
+    color: #000000;
+  }
+  .security-rating.low {
+    background: var(--threat-level-high);
+    color: #ffffff;
   }
 }

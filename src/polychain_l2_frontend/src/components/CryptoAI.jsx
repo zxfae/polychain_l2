@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Brain, Shield, TrendingUp, Calculator, AlertTriangle, CheckCircle, Zap } from 'lucide-react';
-import { polychain_l2_backend } from '../declarations/polychain_l2_backend';
+import { polychain_l2_backend } from 'declarations/polychain_l2_backend';
 import './CryptoAI.css';
 
 function CryptoAI() {
@@ -35,7 +35,7 @@ function CryptoAI() {
     try {
       setLoading(true);
       const data = await polychain_l2_backend.get_crypto_recommendation(
-        BigInt(amount),
+        amount, // Use number directly
         [threatLevel], // Optional value
         [performancePriority] // Optional value
       );

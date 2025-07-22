@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { polychain_l2_backend } from '../declarations/polychain_l2_backend';
+import { polychain_l2_backend } from 'declarations/polychain_l2_backend';
 
 function PerformanceMetrics() {
   const [metrics, setMetrics] = useState(null);
@@ -55,7 +55,7 @@ function PerformanceMetrics() {
           <div className="grid">
             <div className="stat-card">
               <h4>Transactions Per Second</h4>
-              <div className="value">{Number(metrics.transactions_per_second).toLocaleString()}</div>
+              <div className="value">{(typeof metrics.transactions_per_second === 'bigint' ? Number(metrics.transactions_per_second) : metrics.transactions_per_second).toLocaleString()}</div>
               <div className="unit">TPS</div>
             </div>
 

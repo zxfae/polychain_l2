@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { polychain_l2_backend } from './declarations/polychain_l2_backend';
-import { Shield, Activity, AlertTriangle, CheckCircle, Building2, Brain, Zap, BarChart3 } from 'lucide-react';
+import { polychain_l2_backend } from 'declarations/polychain_l2_backend';
+import { safeConvertObject } from './utils/bigint-utils';
+import { Shield, Activity, AlertTriangle, CheckCircle, Building2, Brain, Zap, BarChart3, Package, Bitcoin, Link } from 'lucide-react';
 import BitcoinVault from './components/BitcoinVault';
+import MultiChainVault from './components/MultiChainVault';
+import UnifiedMetrics from './components/UnifiedMetrics';
 import CryptoBenchmark from './components/CryptoBenchmark';
 import PerformanceMetrics from './components/PerformanceMetrics';
 import TransactionManager from './components/TransactionManager';
+import TransactionBatchCompressor from './components/TransactionBatchCompressor';
+import TransactionSequencer from './components/TransactionSequencer';
+import BlockchainExplorer from './components/BlockchainExplorer';
 import CryptoAI from './components/CryptoAI';
 import './App.css';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('vault');
+  const [activeTab, setActiveTab] = useState('explorer');
   const [loading, setLoading] = useState(false);
   const [metrics, setMetrics] = useState(null);
   const [advancedMetrics, setAdvancedMetrics] = useState(null);
@@ -23,7 +29,8 @@ function App() {
     try {
       setLoading(true);
       const data = await polychain_l2_backend.get_performance_metrics();
-      setMetrics(data);
+      const safeData = safeConvertObject(data);
+      setMetrics(safeData);
     } catch (error) {
       console.error('Failed to load metrics:', error);
     } finally {
@@ -34,7 +41,8 @@ function App() {
   const loadAdvancedMetrics = async () => {
     try {
       const data = await polychain_l2_backend.get_layer2_advanced_metrics();
-      setAdvancedMetrics(data);
+      const safeData = safeConvertObject(data);
+      setAdvancedMetrics(safeData);
     } catch (error) {
       console.error('Failed to load advanced metrics:', error);
     }
@@ -59,10 +67,14 @@ function App() {
   };
 
   const tabs = [
-    { id: 'vault', label: 'Vault', icon: Building2 },
+    { id: 'multi-vault', label: 'Multi-Chain Vault', icon: Building2 },
+    { id: 'explorer', label: 'Blockchain Explorer', icon: Link },
+    { id: 'sequencer', label: 'TX Sequencer', icon: Activity },
+    { id: 'unified-metrics', label: 'Universal Analytics', icon: BarChart3 },
+    { id: 'compressor', label: 'Compression', icon: Package },
+    { id: 'vault', label: 'Bitcoin Legacy', icon: Bitcoin },
     { id: 'crypto-ai', label: 'Crypto AI', icon: Brain },
     { id: 'benchmark', label: 'Benchmark', icon: Zap },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   ];
 
   return (
@@ -71,7 +83,10 @@ function App() {
         <div className="header-content">
           <div className="header-left">
             <img src="/logo2.svg" alt="Polychain L2" className="logo" />
-            <h1>Polychain L2 - Bitcoin Layer 2 with Quantum Cryptography</h1>
+            <h1>
+              <Link size={20} />
+              Polychain L2 - Universal Multi-Chain
+            </h1>
           </div>
           <div className="header-right">
             {advancedMetrics && (
@@ -103,7 +118,7 @@ function App() {
             className={`nav-button ${activeTab === tab.id ? 'active' : ''}`}
             onClick={() => setActiveTab(tab.id)}
           >
-            <tab.icon size={20} />
+            <tab.icon size={18} />
             <span>{tab.label}</span>
           </button>
         ))}
@@ -112,6 +127,11 @@ function App() {
       <main className="main-content">
         {loading && <div className="loading">Loading...</div>}
         
+        {activeTab === 'multi-vault' && <MultiChainVault />}
+        {activeTab === 'explorer' && <BlockchainExplorer actor={polychain_l2_backend} />}
+        {activeTab === 'sequencer' && <TransactionSequencer actor={polychain_l2_backend} />}
+        {activeTab === 'unified-metrics' && <UnifiedMetrics />}
+        {activeTab === 'compressor' && <TransactionBatchCompressor />}
         {activeTab === 'vault' && <BitcoinVault />}
         {activeTab === 'crypto-ai' && <CryptoAI />}
         {activeTab === 'benchmark' && <CryptoBenchmark />}
