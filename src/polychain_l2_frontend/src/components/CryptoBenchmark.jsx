@@ -58,6 +58,11 @@ function CryptoBenchmark() {
       for (let i = 0; i < iterations; i++) {
         const frontendStartTime = performance.now();
         
+        // Vérifier si la fonction existe avant de l'appeler
+        if (!polychain_l2_backend.crypto_algorithm_benchmark) {
+          throw new Error('crypto_algorithm_benchmark function not available - backend not properly deployed');
+        }
+        
         const result = await polychain_l2_backend.crypto_algorithm_benchmark(message, selectedAlgorithm);
         
         const frontendEndTime = performance.now();
@@ -132,6 +137,11 @@ function CryptoBenchmark() {
         // Run multiple iterations for each algorithm
         for (let i = 0; i < iterations; i++) {
           const frontendStartTime = performance.now();
+          
+          // Vérifier si la fonction existe avant de l'appeler
+          if (!polychain_l2_backend.crypto_algorithm_benchmark) {
+            throw new Error('crypto_algorithm_benchmark function not available - backend not properly deployed');
+          }
           
           const result = await polychain_l2_backend.crypto_algorithm_benchmark(message, algorithm.value);
           

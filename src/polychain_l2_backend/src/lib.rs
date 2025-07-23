@@ -486,7 +486,7 @@ fn calculate_security_score(vault: &bitcoin_vault::BitcoinVault) -> f64 {
         score += 15.0;
     }
 
-    score.clamp(100.0, 0.0)
+    score.clamp(0.0, 100.0)
 }
 
 fn calculate_crypto_efficiency() -> CryptoEfficiency {
@@ -1364,3 +1364,5 @@ mod tests {
         std::println!("=== SEQUENCER BASIC TEST PASSED ===");
     }
 }
+
+ic_cdk::export_candid!();

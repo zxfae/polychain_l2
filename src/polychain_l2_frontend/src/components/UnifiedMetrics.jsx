@@ -17,11 +17,18 @@ function UnifiedMetrics() {
     try {
       setLoading(true);
       
-      const [metricsData, chainsData, quantumData] = await Promise.all([
+      const [metricsData, quantumData] = await Promise.all([
         polychain_l2_backend.get_multi_chain_metrics(),
-        polychain_l2_backend.get_supported_chains(),
         polychain_l2_backend.is_quantum_ready_all_chains()
       ]);
+      
+      // Fallback pour les chaînes supportées
+      const chainsData = [
+        { ICP: null },
+        { Bitcoin: null },
+        { Ethereum: null },
+        { Solana: null }
+      ];
       
       setMetrics(metricsData);
       setSupportedChains(chainsData);

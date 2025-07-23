@@ -28,9 +28,14 @@ function TransactionBatchCompressor() {
 
   const loadPerformanceMetrics = async () => {
     try {
-      const metrics = await polychain_l2_backend.get_compression_performance_metrics();
-      const safeMetrics = safeConvertObject(metrics);
-      setPerformanceMetrics(safeMetrics);
+      // Tentative d'appel avec gestion d'erreur gracieuse
+      if (polychain_l2_backend.get_compression_performance_metrics) {
+        const metrics = await polychain_l2_backend.get_compression_performance_metrics();
+        const safeMetrics = safeConvertObject(metrics);
+        setPerformanceMetrics(safeMetrics);
+      } else {
+        throw new Error('Function not available');
+      }
     } catch (error) {
       console.error('Error loading performance metrics:', error);
       // Set default metrics in case of error
@@ -48,25 +53,32 @@ function TransactionBatchCompressor() {
 
   const loadBatchList = async () => {
     try {
-      const batchIds = await polychain_l2_backend.list_compressed_batches();
-      
-      // Charger les détails de chaque batch
-      const batchDetails = await Promise.all(
-        batchIds.slice(0, 10).map(async (batchId) => {
-          try {
-            const batch = await polychain_l2_backend.get_compressed_batch(batchId);
-            const safeBatch = Array.isArray(batch) ? batch[0] || null : batch;
-            return safeBatch ? safeConvertObject(safeBatch) : null;
-          } catch (error) {
-            console.error(`Error loading batch ${batchId}:`, error);
-            return null;
-          }
-        })
-      );
-      
-      setCompressionBatches(batchDetails.filter(batch => batch !== null));
+      // Vérifier si la fonction existe avant de l'appeler
+      if (polychain_l2_backend.list_compressed_batches) {
+        const batchIds = await polychain_l2_backend.list_compressed_batches();
+        
+        // Charger les détails de chaque batch
+        const batchDetails = await Promise.all(
+          batchIds.slice(0, 10).map(async (batchId) => {
+            try {
+              const batch = await polychain_l2_backend.get_compressed_batch(batchId);
+              const safeBatch = Array.isArray(batch) ? batch[0] || null : batch;
+              return safeBatch ? safeConvertObject(safeBatch) : null;
+            } catch (error) {
+              console.error(`Error loading batch ${batchId}:`, error);
+              return null;
+            }
+          })
+        );
+        
+        setCompressionBatches(batchDetails.filter(batch => batch !== null));
+      } else {
+        console.warn('list_compressed_batches function not available');
+        setCompressionBatches([]);
+      }
     } catch (error) {
       console.error('Error loading batch list:', error);
+      setCompressionBatches([]);
     }
   };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, RefreshCw, Activity, TrendingUp, Hash, Clock, Users, Zap } from 'lucide-react';
+import { safeNumber } from '../utils/bigint-utils';
 import './blockchain-explorer.css';
 
 const BlockchainExplorer = ({ actor }) => {
@@ -17,16 +18,26 @@ const BlockchainExplorer = ({ actor }) => {
   // Charger les données de la blockchain
   const loadBlockchainData = async () => {
     if (!actor) return;
-    
+
     setLoading(true);
     try {
       const [recentBlocks, blockchainStats] = await Promise.all([
         actor.get_recent_blocks(10), // Derniers 10 blocs
-        actor.get_blockchain_stats()
+        actor.get_blockchain_stats(),
       ]);
-      
-      setBlocks(recentBlocks);
-      setStats(blockchainStats);
+
+      // Inverser les blocs pour afficher le plus récent en premier
+      const sortedBlocks = recentBlocks.reverse();
+      setBlocks(sortedBlocks);
+      // Convertir toutes les valeurs en float64
+      setStats({
+        ...blockchainStats,
+        total_blocks: safeNumber(blockchainStats.total_blocks),
+        total_transactions: safeNumber(blockchainStats.total_transactions),
+        latest_block_time: safeNumber(blockchainStats.latest_block_time),
+        average_tx_per_block: safeNumber(blockchainStats.average_tx_per_block),
+        chain_height: safeNumber(blockchainStats.chain_height),
+      });
     } catch (error) {
       console.error('Error loading blockchain data:', error);
     }
@@ -37,7 +48,9 @@ const BlockchainExplorer = ({ actor }) => {
   const formatTime = (timestamp) => {
     if (!timestamp) return 'N/A';
     try {
-      return new Date(Number(timestamp) / 1_000_000).toLocaleString();
+      // Convertir nat64 en float64 pour éviter l'erreur
+      const ms = parseFloat(timestamp.toString()) / 1000000;
+      return new Date(ms).toLocaleString();
     } catch (e) {
       return 'Invalid Date';
     }
@@ -81,7 +94,7 @@ const BlockchainExplorer = ({ actor }) => {
             Real-time Network Monitor
           </div>
         </div>
-        
+
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-icon">
@@ -144,8 +157,8 @@ const BlockchainExplorer = ({ actor }) => {
         ) : (
           <div className="blocks-list">
             {blocks.map((block, index) => (
-              <div 
-                key={block.hash} 
+              <div
+                key={block.hash}
                 className={`block-card ${selectedBlock?.hash === block.hash ? 'selected' : ''}`}
                 onClick={() => selectBlock(block)}
               >
@@ -153,7 +166,7 @@ const BlockchainExplorer = ({ actor }) => {
                   <div className="block-info">
                     <div className="block-height">
                       <Hash size={16} />
-                      Block #{blocks.length - index}
+                      Block #{stats.total_blocks - index}
                     </div>
                     <div className="block-time">
                       <Clock size={14} />
@@ -167,7 +180,7 @@ const BlockchainExplorer = ({ actor }) => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="block-hashes">
                   <div className="hash-row">
                     <span className="hash-label">Hash:</span>
@@ -201,7 +214,7 @@ const BlockchainExplorer = ({ actor }) => {
                         </div>
                         <div className="detail-item">
                           <span className="detail-label">Nonce:</span>
-                          <span className="detail-value">{block.nonce.toString()}</span>
+                          <span className="detail-value">{parseFloat(block.nonce.toString())}</span>
                         </div>
                       </div>
                     </div>
@@ -227,7 +240,7 @@ const BlockchainExplorer = ({ actor }) => {
                                 </div>
                               </div>
                               <div className="tx-details">
-                                <div className="tx-amount">{tx.amount} Coins</div>
+                                <div className="tx-amount">{parseFloat(tx.amount.toString())} Coins</div>
                                 <div className="tx-time">{formatTime(tx.time_stamp)}</div>
                               </div>
                               {tx.hash && tx.hash[0] && (
