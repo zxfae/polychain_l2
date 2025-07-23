@@ -23,10 +23,30 @@ function MultiChainVault() {
     if (!address) return;
     
     try {
-      const allBalances = await polychain_l2_backend.get_all_chain_balances(address);
-      setBalances(allBalances);
+      // Pour Bitcoin, utiliser get_bitcoin_balance
+      if (selectedChain === 'Bitcoin') {
+        const bitcoinBalance = await polychain_l2_backend.get_bitcoin_balance(address);
+        // Convertir le format pour compatibilité avec l'UI
+        const formattedBalances = [{
+          chain: 'Bitcoin',
+          native_balance: bitcoinBalance.native_bitcoin / 100_000_000, // Convertir satoshi en BTC
+          wrapped_balance: bitcoinBalance.wrapped_bitcoin / 100_000_000,
+          total_balance: bitcoinBalance.total_bitcoin / 100_000_000
+        }];
+        setBalances(formattedBalances);
+      } else {
+        // Pour les autres chaînes, simuler des balances nulles pour l'instant
+        const mockBalances = [{
+          chain: selectedChain,
+          native_balance: 0,
+          wrapped_balance: 0,
+          total_balance: 0
+        }];
+        setBalances(mockBalances);
+      }
     } catch (error) {
       console.error('Failed to load balances:', error);
+      setBalances([]);
     }
   };
 
@@ -55,19 +75,37 @@ function MultiChainVault() {
 
     try {
       const numAmount = parseFloat(amount);
-      const response = await polychain_l2_backend.deposit_multi_chain(
-        { [selectedChain]: null },
-        address,
-        numAmount
-      );
+      let response;
+      
+      // Utiliser les fonctions spécifiques selon la chaîne
+      if (selectedChain === 'Bitcoin') {
+        // Convertir en satoshi (1 BTC = 100,000,000 satoshi)
+        const satoshiAmount = Math.round(numAmount * 100_000_000);
+        
+        if (quantumSecure) {
+          response = await polychain_l2_backend.deposit_bitcoin_with_crypto(
+            address,
+            satoshiAmount,
+            'falcon512', // Utiliser Falcon512 pour la sécurité quantique
+            75 // Niveau de menace quantique élevé
+          );
+        } else {
+          response = await polychain_l2_backend.deposit_bitcoin(address, satoshiAmount);
+        }
+      } else {
+        // Pour les autres chaînes, utiliser une fonction de fallback ou simulation
+        setResult(`❌ ${selectedChain} deposits not yet implemented. Use Bitcoin for now.`);
+        setLoading(false);
+        return;
+      }
 
       if ('Ok' in response) {
-        setResult(response.Ok);
+        setResult(`✅ ${response.Ok}`);
         setAmount('');
         loadBalances();
         loadMetrics();
       } else {
-        setResult(`${response.Err}`);
+        setResult(`❌ ${response.Err}`);
       }
     } catch (error) {
         setResult(`Error: ${error.message}`);
@@ -87,20 +125,41 @@ function MultiChainVault() {
 
     try {
       const numAmount = parseFloat(amount);
-      const response = await polychain_l2_backend.withdraw_multi_chain(
-        { [selectedChain]: null },
-        address,
-        numAmount,
-        quantumSecure
-      );
+      let response;
+      
+      // Utiliser les fonctions spécifiques selon la chaîne
+      if (selectedChain === 'Bitcoin') {
+        // Convertir en satoshi (1 BTC = 100,000,000 satoshi)
+        const satoshiAmount = Math.round(numAmount * 100_000_000);
+        
+        if (quantumSecure) {
+          response = await polychain_l2_backend.withdraw_bitcoin_adaptive(
+            address,
+            satoshiAmount,
+            true, // auto_select_crypto
+            75 // quantum_threat_level
+          );
+        } else {
+          response = await polychain_l2_backend.withdraw_bitcoin(
+            address,
+            satoshiAmount,
+            false // quantum_secure
+          );
+        }
+      } else {
+        // Pour les autres chaînes, utiliser une fonction de fallback ou simulation
+        setResult(`❌ ${selectedChain} withdrawals not yet implemented. Use Bitcoin for now.`);
+        setLoading(false);
+        return;
+      }
 
       if ('Ok' in response) {
-        setResult(response.Ok);
+        setResult(`✅ ${response.Ok}`);
         setAmount('');
         loadBalances();
         loadMetrics();
       } else {
-        setResult(`${response.Err}`);
+        setResult(`❌ ${response.Err}`);
       }
     } catch (error) {
         setResult(`Error: ${error.message}`);
