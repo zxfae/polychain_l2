@@ -1,5 +1,131 @@
+type SequencerBatchResult = record {
+    success: bool;
+    batch_id: text;
+    transaction_count: nat64;
+    sequencing_time_ms: nat64;
+    ordering_strategy: text;
+    fairness_score: float64;
+};
+
+type SequencerMetrics = record {
+    total_transactions_sequenced: nat64;
+    current_pending_count: nat64;
+    average_batch_size: float64;
+    total_batches_created: nat64;
+    average_sequencing_time_ms: float64;
+    fairness_score: float64;
+    ordering_strategy: text;
+};
+
+type SequencingBenefits = record {
+    mev_protection_score: float64;
+    fairness_improvement: float64;
+    throughput_improvement: float64;
+    gas_savings_percentage: float64;
+    front_running_prevention: bool;
+    deterministic_ordering: bool;
+    multi_chain_support: bool;
+    recommended_strategy: text;
+};
+
+type PolyTransaction = record {
+    sender: text;
+    recipient: text;
+    amount: float64;
+    time_stamp: int64;
+    signature: opt text;
+    hash: opt text;
+};
+
+type PolyBlock = record {
+    transactions: vec PolyTransaction;
+    hash: text;
+    previous_hash: text;
+    timestamp: int64;
+    nonce: nat64;
+};
+
+type BlockchainStats = record {
+    total_blocks: nat64;
+    total_transactions: nat64;
+    latest_block_time: int64;
+    average_tx_per_block: float64;
+    chain_height: nat64;
+};
+
+type PerformanceMetrics = record {
+    transactions_per_second: nat32;
+    supported_algorithms: vec text;
+    quantum_resistant: bool;
+    bitcoin_integration: bool;
+    hybrid_vault_active: bool;
+    vault_statistics: VaultStats;
+};
+
+type VaultStats = record {
+    total_deposits: float64;
+    transaction_count: nat64;
+    native_count: nat64;
+    wrapped_count: nat64;
+};
+
+type Layer2AdvancedMetrics = record {
+    quantum_threat_level: nat8;
+    security_score: float64;
+    crypto_efficiency: CryptoEfficiency;
+    auto_selection_enabled: bool;
+    quantum_ready_percentage: float64;
+    threat_detection_active: bool;
+    adaptive_security_enabled: bool;
+    migration_readiness: float64;
+    total_quantum_transactions: nat64;
+    total_classical_transactions: nat64;
+    avg_risk_level: text;
+    performance_impact_quantum: float64;
+};
+
+type CryptoEfficiency = record {
+    ecdsa_efficiency: float64;
+    schnorr_efficiency: float64;
+    falcon_efficiency: float64;
+    mldsa_efficiency: float64;
+    best_algorithm: text;
+    worst_algorithm: text;
+};
+
+type MultiChainMetrics = record {
+    supported_chains: vec text;
+    total_bridges: nat32;
+    cross_chain_volume_24h: float64;
+    bridge_security_score: float64;
+    average_bridge_time: float64;
+    total_locked_value: float64;
+    active_validators: nat32;
+    bridge_uptime: float64;
+};
+
 service : {
     "greet": (text) -> (text) query;
     "get_balance": (text) -> (float64) query;
     "create_transaction": (text, text, float64) -> (variant { Ok : text; Err : text });
+    
+    // Performance & Metrics API functions
+    "get_performance_metrics": () -> (PerformanceMetrics) query;
+    "get_layer2_advanced_metrics": () -> (Layer2AdvancedMetrics) query;
+    "get_multi_chain_metrics": () -> (MultiChainMetrics) query;
+    
+    // Sequencer API functions
+    "create_transaction_sequencer": (text) -> (variant { Ok : text; Err : text });
+    "add_transaction_to_sequencer": (text, text, float64) -> (variant { Ok : text; Err : text });
+    "sequence_transaction_batch": (opt nat64) -> (variant { Ok : SequencerBatchResult; Err : text });
+    "get_sequencer_metrics": () -> (SequencerMetrics) query;
+    "analyze_sequencing_benefits": () -> (SequencingBenefits) query;
+    "test_pos_consensus": () -> (variant { Ok : text; Err : text });
+    
+    // Blockchain Explorer API functions
+    "get_blockchain": () -> (vec PolyBlock) query;
+    "get_recent_blocks": (nat32) -> (vec PolyBlock) query;
+    "get_block_by_hash": (text) -> (opt PolyBlock) query;
+    "get_all_transactions": () -> (vec PolyTransaction) query;
+    "get_blockchain_stats": () -> (BlockchainStats) query;
 }

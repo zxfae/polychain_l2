@@ -1,0 +1,461 @@
+/* --- chainselector component styles :: v1.3 bold, clean & professional --- */
+
+/* ==========================================================================
+   variables (aligned with crypto-ai.css, refined)
+   ========================================================================== */
+:root {
+  /* colors */
+  --chain-btc: #a68b00;            /* golden bronze for bitcoin */
+  --chain-eth: #1e3a8a;            /* deep navy for ethereum */
+  --chain-icp: #15803d;            /* forest green for icp */
+  --chain-sol: #7f1d1d;            /* deep bordeaux for solana */
+  --accent-glow: #2563eb;          /* vibrant blue for highlights */
+  --glass-bg: rgba(17, 24, 39, 0.75); /* enhanced frosted glass */
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --gradient-primary: linear-gradient(135deg, #2563eb, #15803d 50%, #4ade80);
+  --gradient-glow: linear-gradient(45deg, rgba(37, 99, 235, 0.5), rgba(21, 128, 61, 0.3));
+  --shimmer-glow: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  --neutral-50: #f9fafb;           /* light text for high contrast */
+  --neutral-200: #d4d4d8;          /* soft gray for secondary text */
+  --neutral-700: #3f3f46;          /* dark gray for backgrounds */
+  --neutral-800: #18181b;          /* deep anthracite for depth */
+
+  /* shadows and transitions */
+  --shadow-glow: 0 0 15px rgba(37, 99, 235, 0.5);
+  --shadow-soft: 0 6px 14px rgba(0, 0, 0, 0.3);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-glow: all 0.4s ease-in-out;
+
+  /* typography */
+  --font-primary: 'inter', -apple-system, blinkmacsystemfont, sans-serif;
+  --font-display: 'montserrat', sans-serif; /* bold, professional headings */
+
+  /* scanline effect */
+  --scanline-bg: linear-gradient(
+    0deg,
+    rgba(17, 24, 39, 0) 0%,
+    rgba(17, 24, 39, 0.2) 50%,
+    rgba(17, 24, 39, 0) 100%
+  );
+}
+
+/* ==========================================================================
+   chain selector container
+   ========================================================================== */
+.chain-selector {
+  margin-bottom: 2.5rem;
+  font-family: var(--font-primary);
+  position: relative;
+  padding: 2rem;
+  background: linear-gradient(180deg, var(--glass-bg), rgba(21, 128, 61, 0.1));
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: inset 0 0 80px rgba(255, 255, 255, 0.03), var(--shadow-soft);
+}
+
+.chain-selector::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--scanline-bg);
+  background-size: 100% 10px;
+  opacity: 0.3;
+  animation: scan 4s linear infinite;
+}
+
+/* ==========================================================================
+   header
+   ========================================================================== */
+.chain-selector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.chain-selector-header h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--neutral-50);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.chain-selector-header h3 svg {
+  width: 20px;
+  height: 20px;
+  color: var(--accent-glow);
+  filter: drop-shadow(0 0 6px var(--accent-glow));
+  transition: var(--transition-glow);
+}
+
+.chain-selector-header h3:hover svg {
+  transform: scale(1.1);
+}
+
+.quantum-badge {
+  background: var(--gradient-primary);
+  color: var(--neutral-50);
+  padding: 0.3rem 0.9rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  box-shadow: var(--shadow-glow);
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition-glow);
+}
+
+.quantum-badge::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--shimmer-glow);
+  transform: translatex(-100%);
+  animation: shimmer 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  opacity: 0.5;
+}
+
+.quantum-badge svg {
+  width: 16px;
+  height: 16px;
+  color: var(--neutral-50);
+  z-index: 1;
+}
+
+.quantum-badge:hover {
+  filter: brightness(1.1);
+  transform: scale(1.05);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+/* ==========================================================================
+   chain grid
+   ========================================================================== */
+.chain-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+/* ==========================================================================
+   chain card
+   ========================================================================== */
+.chain-card {
+  background: var(--glass-bg);
+  border: 2px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  position: relative;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: cardfadein 0.8s var(--transition-smooth) forwards;
+  animation-delay: calc(var(--i, 0) * 0.15s);
+  box-shadow: var(--shadow-soft);
+}
+
+.chain-card:hover,
+.chain-card:focus {
+  transform: translatey(-5px) scale(1.02);
+  box-shadow: var(--shadow-glow);
+  border-color: var(--chain-color);
+  background: var(--chain-color)20;
+}
+
+.chain-card.selected {
+  background: var(--chain-color)25;
+  border: 2px solid var(--chain-color);
+  box-shadow: 0 0 25px var(--chain-color)50;
+}
+
+.chain-card:focus {
+  outline: 3px solid var(--accent-glow);
+  outline-offset: 4px;
+}
+
+.chain-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--scanline-bg);
+  background-size: 100% 8px;
+  opacity: 0.2;
+  animation: scan 3s linear infinite;
+}
+
+.chain-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--shimmer-glow);
+  transform: translatex(-100%);
+  animation: shimmer 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  opacity: 0.4;
+}
+
+/* ==========================================================================
+   chain header
+   ========================================================================== */
+.chain-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.chain-header svg {
+  width: 28px;
+  height: 28px;
+  color: var(--chain-color);
+  filter: drop-shadow(0 0 8px var(--chain-color));
+  transition: var(--transition-glow);
+}
+
+.chain-header svg:hover {
+  transform: scale(1.15);
+}
+
+.chain-info {
+  margin-left: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.chain-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--neutral-50);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  position: relative;
+  transition: var(--transition-smooth);
+}
+
+.chain-name:hover::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--shimmer-glow);
+  animation: glitch 1.5s infinite;
+}
+
+.chain-token {
+  font-size: 0.875rem;
+  color: var(--neutral-50);
+  background: var(--chain-color)30;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  margin-top: 0.3rem;
+  align-self: flex-start;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   chain description
+   ========================================================================== */
+.chain-description {
+  color: var(--neutral-200);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* ==========================================================================
+   chain metrics
+   ========================================================================== */
+.chain-metrics {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.metric span:first-child {
+  color: var(--neutral-200);
+  font-weight: 500;
+}
+
+.metric-value {
+  font-weight: 700;
+  color: var(--chain-color);
+  margin-top: 0.3rem;
+  text-shadow: 0 0 4px var(--chain-color);
+  position: relative;
+}
+
+.metric-value.quantum {
+  color: var(--chain-icp);
+}
+
+/* ==========================================================================
+   selection indicator
+   ========================================================================== */
+.selection-indicator {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--chain-color);
+  text-shadow: 0 0 4px var(--chain-color);
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--chain-color);
+  border-radius: 50%;
+  box-shadow: 0 0 12px var(--chain-color);
+  animation: pulse 1.8s infinite ease-in-out;
+}
+
+/* ==========================================================================
+   animations
+   ========================================================================== */
+@keyframes pulse {
+  0% { opacity: 1; transform: scale(1); box-shadow: 0 0 12px var(--chain-color); }
+  50% { opacity: 0.8; transform: scale(1.25); box-shadow: 0 0 18px var(--chain-color); }
+  100% { opacity: 1; transform: scale(1); box-shadow: 0 0 12px var(--chain-color); }
+}
+
+@keyframes scan {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 40px; }
+}
+
+@keyframes shimmer {
+  0% { transform: translatex(-100%); }
+  100% { transform: translatex(100%); }
+}
+
+@keyframes cardfadein {
+  from { opacity: 0; transform: translatey(15px) scale(0.95); }
+  to { opacity: 1; transform: translatey(0) scale(1); }
+}
+
+@keyframes glitch {
+  0% { transform: translate(0); opacity: 1; }
+  20% { transform: translate(-2px, 1px); opacity: 0.8; }
+  40% { transform: translate(2px, -1px); opacity: 0.9; }
+  60% { transform: translate(-1px, 2px); opacity: 0.85; }
+  80% { transform: translate(1px, -2px); opacity: 0.9; }
+  100% { transform: translate(0); opacity: 1; }
+}
+
+/* ==========================================================================
+   responsive design
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .chain-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  .chain-selector-header h3 {
+    font-size: 1.3rem;
+  }
+  .chain-name {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .chain-selector {
+    padding: 1.5rem;
+  }
+  .chain-grid {
+    grid-template-columns: 1fr;
+  }
+  .chain-selector-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .chain-selector-header h3 {
+    font-size: 1.2rem;
+  }
+  .quantum-badge {
+    font-size: 0.8rem;
+  }
+  .chain-name {
+    font-size: 1.1rem;
+  }
+  .chain-description {
+    font-size: 0.875rem;
+  }
+}
+
+/* ==========================================================================
+   accessibility enhancements
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .chain-card,
+  .pulse-dot,
+  .quantum-badge,
+  .chain-header svg,
+  .chain-name::after {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .chain-name,
+  .chain-token,
+  .chain-description,
+  .metric span:first-child,
+  .metric-value,
+  .selection-indicator {
+    color: #ffffff;
+    text-shadow: none;
+  }
+  .chain-card {
+    border-color: #ffffff;
+  }
+  .chain-card.selected {
+    background: var(--chain-color);
+    color: #000000;
+  }
+  .quantum-badge {
+    background: #ffffff;
+    color: #000000;
+  }
+  .chain-card::after,
+  .quantum-badge::after {
+    background: transparent;
+  }
+}

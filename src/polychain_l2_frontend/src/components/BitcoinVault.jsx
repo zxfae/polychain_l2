@@ -1,5 +1,8 @@
+// BitcoinVault.jsx
 import { useState, useEffect } from 'react';
-import { polychain_l2_backend } from '../declarations/polychain_l2_backend';
+import { ArrowDown, ArrowUp, RefreshCw } from 'lucide-react';
+import { polychain_l2_backend } from 'declarations/polychain_l2_backend';
+import './bitcoin-vault.css';
 
 function BitcoinVault() {
   const [address, setAddress] = useState('');
@@ -11,22 +14,15 @@ function BitcoinVault() {
 
   const handleDeposit = async () => {
     if (!address || !amount) {
-      setResult('Please enter both address and amount');
+      setResult('Please enter an address and amount');
       return;
     }
-
-    if (!polychain_l2_backend) {
-      setResult('Error: Backend not initialized');
-      return;
-    }
-
     setLoading(true);
     setResult('');
-    
     try {
       const amountSatoshi = Math.floor(parseFloat(amount) * 100000000);
       const response = await polychain_l2_backend.deposit_bitcoin(address, amountSatoshi);
-      setResult(response.Ok || response);
+      setResult(response.Ok || `Error: ${response.Err || response}`);
       loadBalance();
     } catch (error) {
       setResult(`Error: ${error.message || error}`);
@@ -37,22 +33,15 @@ function BitcoinVault() {
 
   const handleWithdraw = async () => {
     if (!address || !amount) {
-      setResult('Please enter both address and amount');
+      setResult('Please enter an address and amount');
       return;
     }
-
-    if (!polychain_l2_backend) {
-      setResult('Error: Backend not initialized');
-      return;
-    }
-
     setLoading(true);
     setResult('');
-    
     try {
       const amountSatoshi = Math.floor(parseFloat(amount) * 100000000);
       const response = await polychain_l2_backend.withdraw_bitcoin(address, amountSatoshi, quantumSecure);
-      setResult(response.Ok || response);
+      setResult(response.Ok || `Error: ${response.Err || response}`);
       loadBalance();
     } catch (error) {
       setResult(`Error: ${error.message || error}`);
@@ -63,14 +52,13 @@ function BitcoinVault() {
 
   const loadBalance = async () => {
     if (!address) return;
-    
     try {
-      if (!polychain_l2_backend) {
-        console.error('Backend not initialized');
-        return;
-      }
-      const balanceData = await polychain_l2_backend.get_bitcoin_balance(address);
-      setBalance(balanceData);
+      const data = await polychain_l2_backend.get_bitcoin_balance(address);
+      setBalance({
+        native_bitcoin: Number(data.native_bitcoin || 0),
+        wrapped_bitcoin: Number(data.wrapped_bitcoin || 0),
+        total_bitcoin: Number(data.total_bitcoin || 0)
+      });
     } catch (error) {
       console.error('Failed to load balance:', error);
       setBalance(null);
@@ -78,10 +66,8 @@ function BitcoinVault() {
   };
 
   useEffect(() => {
-    if (address && address.length > 2) {
-      const timer = setTimeout(() => {
-        loadBalance();
-      }, 500);
+    if (address.length > 2) {
+      const timer = setTimeout(loadBalance, 500);
       return () => clearTimeout(timer);
     } else {
       setBalance(null);
@@ -90,97 +76,73 @@ function BitcoinVault() {
 
   if (!polychain_l2_backend) {
     return (
-      <div className="card">
+      <div className="vault-card">
         <h2>Bitcoin Vault - Layer 2 Hybrid System</h2>
-        <div className="loading">
-          Initializing backend connection...
-        </div>
+        <div className="loading shimmer">Initializing backend connection...</div>
       </div>
     );
   }
 
   return (
-    <div className="card">
+    <div className="vault-card">
       <h2>Bitcoin Vault - Layer 2 Hybrid System</h2>
-      <p style={{ color: 'rgba(255, 255, 255, 0.8)', marginBottom: '2rem' }}>
-        Advanced Bitcoin Layer 2 solution with quantum-resistant cryptography. 
-        Deposits above 100,000 sats are stored as native Bitcoin, smaller amounts as wrapped tokens.
+      <p className="description">
+        Advanced Bitcoin Layer 2 solution with quantum-resistant cryptography.
+        Deposits above 100,000 sats are stored as native Bitcoin, lower amounts as wrapped tokens.
       </p>
 
       <div className="form-group">
-        <label htmlFor="address">Bitcoin Address:</label>
+        <label htmlFor="address">Bitcoin Address</label>
         <input
           id="address"
           type="text"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder="Enter Bitcoin address (e.g., alice, bob, charlie)"
+          placeholder="e.g. alice, bob, 1A1zP1..."
         />
       </div>
 
       <div className="form-group">
-        <label htmlFor="amount">Amount (BTC):</label>
+        <label htmlFor="amount">Amount (BTC)</label>
         <input
           id="amount"
           type="number"
           step="0.00000001"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          placeholder="Enter amount in BTC"
+          placeholder="0.00001234"
         />
       </div>
 
-      <div className="form-group">
+      <div className="form-group checkbox">
         <label>
           <input
             type="checkbox"
             checked={quantumSecure}
             onChange={(e) => setQuantumSecure(e.target.checked)}
-            style={{ marginRight: '0.5rem' }}
           />
-          Use Quantum-Resistant Cryptography (Falcon512)
+          Use quantum-resistant cryptography (Falcon512)
         </label>
       </div>
 
-      <div>
-        <button 
-          className="button" 
-          onClick={handleDeposit}
-          disabled={loading}
-        >
-          {loading ? 'Processing...' : 'Deposit Bitcoin'}
+      <div className="button-row">
+        <button onClick={handleDeposit} disabled={loading}>
+          <ArrowDown size={16} /> {loading ? 'Processing...' : 'Deposit'}
         </button>
-        <button 
-          className="button danger" 
-          onClick={handleWithdraw}
-          disabled={loading}
-        >
-          {loading ? 'Processing...' : 'Withdraw Bitcoin'}
+        <button className="danger" onClick={handleWithdraw} disabled={loading}>
+          <ArrowUp size={16} /> {loading ? 'Processing...' : 'Withdraw'}
         </button>
-        <button 
-          className="button secondary" 
-          onClick={loadBalance}
-          disabled={!address}
-        >
-          Refresh Balance
+        <button className="secondary" onClick={loadBalance} disabled={!address}>
+          <RefreshCw size={16} /> Refresh
         </button>
       </div>
 
       {balance && (
-        <div className="balance-display">
-          <h4>Balance for {address}</h4>
-          <div className="balance-item">
-            <span>Native Bitcoin:</span>
-            <span className="amount">{(Number(balance.native_bitcoin) / 100000000).toFixed(8)} BTC</span>
-          </div>
-          <div className="balance-item">
-            <span>Wrapped Bitcoin:</span>
-            <span className="amount">{(Number(balance.wrapped_bitcoin) / 100000000).toFixed(8)} BTC</span>
-          </div>
-          <div className="balance-item">
-            <span>Total Bitcoin:</span>
-            <span className="amount">{(Number(balance.total_bitcoin) / 100000000).toFixed(8)} BTC</span>
-          </div>
+        <div className="balance">
+          <h4>Balance</h4>
+          <div><strong>Native:</strong> {(balance.native_bitcoin / 1e8).toFixed(8)} BTC</div>
+          <div><strong>Wrapped:</strong> {(balance.wrapped_bitcoin / 1e8).toFixed(8)} BTC</div>
+          <div><strong>Total:</strong> {(balance.total_bitcoin / 1e8).toFixed(8)} BTC</div>
         </div>
       )}
 
@@ -194,3 +156,4 @@ function BitcoinVault() {
 }
 
 export default BitcoinVault;
+

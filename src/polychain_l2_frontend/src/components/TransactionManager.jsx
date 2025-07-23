@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { polychain_l2_backend } from '../declarations/polychain_l2_backend';
+import { polychain_l2_backend } from 'declarations/polychain_l2_backend';
 
 function TransactionManager() {
   const [sender, setSender] = useState('');

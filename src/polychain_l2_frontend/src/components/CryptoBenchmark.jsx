@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { polychain_l2_backend } from '../declarations/polychain_l2_backend';
+import { polychain_l2_backend } from 'declarations/polychain_l2_backend';
+import { safeNumber, safeConvertObject } from '../utils/bigint-utils';
 
 function CryptoBenchmark() {
   const [message, setMessage] = useState('Hello Polychain L2 - Quantum Resistant Blockchain!');
@@ -66,10 +67,8 @@ function CryptoBenchmark() {
           const benchmark = result.Ok;
           frontendTimes.push(frontendTimeMs);
           
-          // Convert backend time from ns to ms for comparison
-          const backendTimeNs = typeof benchmark.total_time_ns === 'bigint' 
-            ? Number(benchmark.total_time_ns) 
-            : benchmark.total_time_ns;
+          // Safely convert backend time from any type to number
+          const backendTimeNs = safeNumber(benchmark.total_time_ns, 0);
           backendTimes.push(backendTimeNs);
           
           console.log(`Iteration ${i + 1}: Frontend=${frontendTimeMs.toFixed(2)}ms, Backend=${backendTimeNs}ns`);
@@ -143,10 +142,8 @@ function CryptoBenchmark() {
             const benchmark = result.Ok;
             frontendTimes.push(frontendTimeMs);
             
-            // Convert backend time from ns to ms for comparison
-            const backendTimeNs = typeof benchmark.total_time_ns === 'bigint' 
-              ? Number(benchmark.total_time_ns) 
-              : benchmark.total_time_ns;
+            // Safely convert backend time from any type to number
+            const backendTimeNs = safeNumber(benchmark.total_time_ns, 0);
             backendTimes.push(backendTimeNs);
             
             console.log(`${algorithm.name} iteration ${i + 1}: Frontend=${frontendTimeMs.toFixed(2)}ms, Backend=${backendTimeNs}ns`);
@@ -196,18 +193,8 @@ function CryptoBenchmark() {
   };
 
   const formatTime = (nanoseconds) => {
-    console.log('Raw nanoseconds value:', nanoseconds, 'type:', typeof nanoseconds);
-    
-    let ns;
-    if (typeof nanoseconds === 'bigint') {
-      ns = Number(nanoseconds);
-    } else if (typeof nanoseconds === 'string') {
-      ns = parseInt(nanoseconds, 10);
-    } else {
-      ns = nanoseconds;
-    }
-    
-    console.log('Converted ns value:', ns);
+    // Safely convert any type to number
+    const ns = safeNumber(nanoseconds, 0);
     
     if (ns === 0) return '0ns (IC Optimized)';
     if (ns < 1000) return `${ns}ns`;

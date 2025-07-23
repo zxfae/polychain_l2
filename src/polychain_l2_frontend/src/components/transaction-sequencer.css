@@ -1,0 +1,832 @@
+/* ==========================================================================
+   TransactionSequencer Component Styles :: Modern & Efficient Design
+   Inspired by MultiChainVault styling
+   ========================================================================== */
+
+/* ==========================================================================
+   CSS Variables & Global Settings
+   ========================================================================== */
+:root {
+  /* Colors - Matching multi-chain-vault theme */
+  --sequencer-primary: #2563eb;
+  --sequencer-secondary: #15803d;
+  --sequencer-accent: #4ade80;
+  --sequencer-bg: rgba(17, 24, 39, 0.75);
+  --sequencer-glass-border: rgba(255, 255, 255, 0.2);
+  --sequencer-text-primary: #f9fafb;
+  --sequencer-text-secondary: #d4d4d8;
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #2563eb, #15803d 50%, #4ade80);
+  --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  --shimmer-glow: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+  
+  /* Shadows & Effects */
+  --shadow-glow: 0 0 15px rgba(37, 99, 235, 0.5);
+  --shadow-soft: 0 6px 14px rgba(0, 0, 0, 0.3);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Typography */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Montserrat', sans-serif;
+}
+
+/* ==========================================================================
+   Main Container
+   ========================================================================== */
+.transaction-sequencer {
+  background: var(--sequencer-bg);
+  color: var(--sequencer-text-primary);
+  padding: 2rem;
+  border-radius: 16px;
+  margin: 20px 0;
+  box-shadow: inset 0 0 80px rgba(255, 255, 255, 0.03), var(--shadow-soft);
+  font-family: var(--font-primary);
+  position: relative;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: sequencerFadeIn 0.8s var(--transition-smooth) forwards;
+}
+
+.transaction-sequencer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(0deg, rgba(17, 24, 39, 0) 0%, rgba(17, 24, 39, 0.2) 50%, rgba(17, 24, 39, 0) 100%);
+  background-size: 100% 10px;
+  opacity: 0.3;
+  animation: scan 4s linear infinite;
+}
+
+/* ==========================================================================
+   Sequencer Header
+   ========================================================================== */
+.sequencer-header {
+  margin-bottom: 2rem;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.sequencer-header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--sequencer-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.sequencer-header h2 svg {
+  color: var(--sequencer-primary);
+  filter: drop-shadow(0 0 6px var(--sequencer-primary));
+  transition: var(--transition-smooth);
+}
+
+.sequencer-header h2:hover svg {
+  transform: scale(1.1);
+}
+
+.sequencer-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--gradient-primary);
+  color: var(--sequencer-text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-glow);
+  position: relative;
+  overflow: hidden;
+}
+
+.sequencer-badge::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--shimmer-glow);
+  transform: translateX(-100%);
+  animation: shimmer 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  opacity: 0.5;
+}
+
+.sequencer-header p {
+  margin: 0;
+  color: var(--sequencer-text-secondary);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   Sequencer Metrics
+   ========================================================================== */
+.sequencer-metrics {
+  background: var(--sequencer-bg);
+  backdrop-filter: blur(20px);
+  border: 2px solid var(--sequencer-glass-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: sequencerFadeIn 0.8s var(--transition-smooth) forwards;
+  animation-delay: 0.1s;
+}
+
+.sequencer-metrics h3 {
+  margin: 0 0 1.25rem 0;
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--sequencer-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sequencer-metrics h3 svg {
+  color: var(--sequencer-primary);
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.metric-card {
+  background: var(--sequencer-bg);
+  backdrop-filter: blur(20px);
+  border: 2px solid var(--sequencer-glass-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  animation: sequencerFadeIn 0.8s var(--transition-smooth) forwards;
+  animation-delay: calc(var(--i, 0) * 0.1s + 0.2s);
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-glass);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.metric-card:hover::before {
+  opacity: 1;
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-glow);
+  border-color: var(--sequencer-primary);
+}
+
+.metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: var(--gradient-primary);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  flex-shrink: 0;
+}
+
+.metric-icon svg {
+  color: white;
+}
+
+.metric-content {
+  flex: 1;
+}
+
+.metric-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--sequencer-accent);
+  margin-bottom: 0.25rem;
+  text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+  font-family: var(--font-display);
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: var(--sequencer-text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   Sequencer Benefits
+   ========================================================================== */
+.sequencer-benefits {
+  background: var(--sequencer-bg);
+  backdrop-filter: blur(20px);
+  border: 2px solid var(--sequencer-glass-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: sequencerFadeIn 0.8s var(--transition-smooth) forwards;
+  animation-delay: 0.3s;
+}
+
+.sequencer-benefits h3 {
+  margin: 0 0 1.25rem 0;
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--sequencer-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sequencer-benefits h3 svg {
+  color: var(--sequencer-primary);
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--sequencer-bg);
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  border: 2px solid var(--sequencer-glass-border);
+  transition: var(--transition-smooth);
+  position: relative;
+}
+
+.benefit-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: var(--gradient-primary);
+  border-radius: 0 2px 2px 0;
+}
+
+.benefit-item:hover {
+  transform: translateX(4px);
+  border-color: var(--sequencer-primary);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.benefit-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(74, 222, 128, 0.2);
+  flex-shrink: 0;
+}
+
+.benefit-icon svg {
+  color: var(--sequencer-accent);
+}
+
+.benefit-content {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.benefit-label {
+  font-weight: 600;
+  color: var(--sequencer-text-primary);
+  font-size: 0.9375rem;
+}
+
+.benefit-value {
+  font-weight: 700;
+  color: var(--sequencer-accent);
+  font-size: 1.0625rem;
+  font-family: var(--font-display);
+}
+
+/* ==========================================================================
+   Sequencer Controls
+   ========================================================================== */
+.sequencer-controls {
+  background: var(--sequencer-bg);
+  backdrop-filter: blur(20px);
+  border: 2px solid var(--sequencer-glass-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: sequencerFadeIn 0.8s var(--transition-smooth) forwards;
+  animation-delay: 0.4s;
+}
+
+.sequencer-controls h3 {
+  margin: 0 0 1.25rem 0;
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--sequencer-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sequencer-controls h3 svg {
+  color: var(--sequencer-primary);
+}
+
+.control-group {
+  margin-bottom: 1.25rem;
+}
+
+.control-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--sequencer-text-primary);
+  font-family: var(--font-primary);
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.control-group select {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.75rem;
+  border: 2px solid var(--sequencer-glass-border);
+  border-radius: 8px;
+  background: var(--sequencer-bg);
+  color: var(--sequencer-text-primary);
+  font-family: var(--font-primary);
+  font-size: 0.9375rem;
+  transition: var(--transition-smooth);
+}
+
+.control-group select:focus {
+  border-color: var(--sequencer-primary);
+  box-shadow: var(--shadow-glow);
+  outline: none;
+}
+
+.control-group select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Action Buttons
+   ========================================================================== */
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.create-btn,
+.consensus-btn,
+.add-tx-btn,
+.batch-btn,
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-primary);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.create-btn {
+  background: linear-gradient(45deg, #ef4444, #dc2626);
+  color: white;
+  flex: 1;
+  min-width: 160px;
+}
+
+.create-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+  filter: brightness(1.1);
+}
+
+.consensus-btn {
+  background: linear-gradient(45deg, #10b981, #059669);
+  color: white;
+  flex: 1;
+  min-width: 160px;
+}
+
+.consensus-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+  filter: brightness(1.1);
+}
+
+.add-tx-btn {
+  background: var(--gradient-primary);
+  color: white;
+  width: 100%;
+}
+
+.add-tx-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+  filter: brightness(1.1);
+}
+
+.batch-btn {
+  background: linear-gradient(45deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.batch-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+  filter: brightness(1.1);
+}
+
+.refresh-btn {
+  background: var(--sequencer-bg);
+  color: var(--sequencer-text-primary);
+  border: 2px solid var(--sequencer-glass-border);
+  width: 100%;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: var(--gradient-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+  border-color: var(--sequencer-primary);
+}
+
+.create-btn:disabled,
+.consensus-btn:disabled,
+.add-tx-btn:disabled,
+.batch-btn:disabled,
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  filter: none;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   Add Transaction & Batch Processing
+   ========================================================================== */
+.add-transaction,
+.batch-processing {
+  background: var(--sequencer-bg);
+  backdrop-filter: blur(20px);
+  border: 2px solid var(--sequencer-glass-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: sequencerFadeIn 0.8s var(--transition-smooth) forwards;
+  animation-delay: 0.5s;
+}
+
+.add-transaction h3,
+.batch-processing h3 {
+  margin: 0 0 1.25rem 0;
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--sequencer-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.add-transaction h3 svg,
+.batch-processing h3 svg {
+  color: var(--sequencer-primary);
+}
+
+.transaction-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr 150px;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .transaction-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+.transaction-form input,
+.batch-controls input {
+  padding: 0.75rem;
+  border: 2px solid var(--sequencer-glass-border);
+  border-radius: 8px;
+  background: var(--sequencer-bg);
+  color: var(--sequencer-text-primary);
+  font-family: var(--font-primary);
+  font-size: 0.9375rem;
+  transition: var(--transition-smooth);
+}
+
+.transaction-form input:focus,
+.batch-controls input:focus {
+  border-color: var(--sequencer-primary);
+  box-shadow: var(--shadow-glow);
+  outline: none;
+}
+
+.transaction-form input::placeholder {
+  color: var(--sequencer-text-secondary);
+}
+
+.transaction-form input:disabled,
+.batch-controls input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.batch-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.batch-controls label {
+  font-weight: 600;
+  color: var(--sequencer-text-primary);
+  min-width: 100px;
+}
+
+.batch-controls input {
+  width: 120px;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Messages
+   ========================================================================== */
+.message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  word-break: break-word;
+  animation: messageSlideIn 0.3s ease;
+}
+
+.message.success {
+  background: rgba(16, 185, 129, 0.2);
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.message.error {
+  background: rgba(239, 68, 68, 0.2);
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.message-icon {
+  flex-shrink: 0;
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.sequencer-footer {
+  border-top: 2px solid var(--sequencer-glass-border);
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+  animation: sequencerFadeIn 0.8s var(--transition-smooth) forwards;
+  animation-delay: 0.6s;
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes sequencerFadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px) scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+}
+
+@keyframes scan {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100px; }
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .metrics-grid,
+  .benefits-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .sequencer-header h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .transaction-sequencer {
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+  
+  .metrics-grid,
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .metric-card,
+  .benefit-item {
+    padding: 1rem;
+  }
+  
+  .metric-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .metric-value {
+    font-size: 1.5rem;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .action-buttons button {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .batch-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .batch-controls input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .sequencer-header h2 {
+    font-size: 1.25rem;
+  }
+  
+  .metric-value {
+    font-size: 1.25rem;
+  }
+  
+  .benefit-content {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+}
+
+/* ==========================================================================
+   Accessibility & Performance
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .transaction-sequencer,
+  .transaction-sequencer::before,
+  .sequencer-metrics,
+  .sequencer-benefits,
+  .sequencer-controls,
+  .add-transaction,
+  .batch-processing,
+  .sequencer-footer,
+  .metric-card,
+  .benefit-item,
+  .sequencer-badge::after,
+  .spinning,
+  .message {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .sequencer-header h2,
+  .sequencer-metrics h3,
+  .sequencer-benefits h3,
+  .sequencer-controls h3,
+  .add-transaction h3,
+  .batch-processing h3,
+  .metric-value,
+  .benefit-value,
+  .control-group label,
+  .batch-controls label {
+    color: #ffffff;
+    text-shadow: none;
+  }
+  
+  .sequencer-metrics,
+  .sequencer-benefits,
+  .sequencer-controls,
+  .add-transaction,
+  .batch-processing,
+  .metric-card,
+  .benefit-item {
+    border-color: #ffffff;
+  }
+  
+  .sequencer-badge,
+  .create-btn:hover:not(:disabled),
+  .consensus-btn:hover:not(:disabled),
+  .add-tx-btn:hover:not(:disabled),
+  .batch-btn:hover:not(:disabled),
+  .refresh-btn:hover:not(:disabled) {
+    background: #ffffff;
+    color: #000000;
+  }
+  
+  .message.success,
+  .message.error {
+    background: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+  }
+}
