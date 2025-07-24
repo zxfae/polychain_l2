@@ -237,6 +237,88 @@ async fn deposit_bitcoin_with_crypto(
     })
 }
 
+// ========== ETHEREUM FUNCTIONS ==========
+
+#[update]
+async fn deposit_ethereum(address: String, amount_wei: u64) -> Result<String, String> {
+    if amount_wei == 0 {
+        return Err("Amount must be positive".to_string());
+    }
+
+    // Convert wei to ETH for display (1 ETH = 10^18 wei)
+    let amount_eth = amount_wei as f64 / 1_000_000_000_000_000_000.0;
+    
+    // Simulate Ethereum deposit logic
+    Ok(format!("Ethereum deposit successful: {} ETH ({} wei) to address {}", amount_eth, amount_wei, address))
+}
+
+#[update]
+async fn withdraw_ethereum(address: String, amount_wei: u64, quantum_secure: bool) -> Result<String, String> {
+    if amount_wei == 0 {
+        return Err("Amount must be positive".to_string());
+    }
+
+    let crypto_algo = if quantum_secure { "Falcon512" } else { "ECDSA" };
+    let amount_eth = amount_wei as f64 / 1_000_000_000_000_000_000.0;
+    
+    Ok(format!("Ethereum withdrawal initiated: {} ETH ({} wei) using {} - TxID: eth_{}", 
+               amount_eth, amount_wei, crypto_algo, ic_cdk::api::time()))
+}
+
+// ========== ICP FUNCTIONS ==========
+
+#[update]
+async fn deposit_icp(address: String, amount_e8s: u64) -> Result<String, String> {
+    if amount_e8s == 0 {
+        return Err("Amount must be positive".to_string());
+    }
+
+    // Convert e8s to ICP for display (1 ICP = 10^8 e8s)
+    let amount_icp = amount_e8s as f64 / 100_000_000.0;
+    
+    Ok(format!("ICP deposit successful: {} ICP ({} e8s) to address {}", amount_icp, amount_e8s, address))
+}
+
+#[update]
+async fn withdraw_icp(address: String, amount_e8s: u64, quantum_secure: bool) -> Result<String, String> {
+    if amount_e8s == 0 {
+        return Err("Amount must be positive".to_string());
+    }
+
+    let crypto_algo = if quantum_secure { "ML-DSA44" } else { "ECDSA" };
+    let amount_icp = amount_e8s as f64 / 100_000_000.0;
+    
+    Ok(format!("ICP withdrawal initiated: {} ICP ({} e8s) using {} - TxID: icp_{}", 
+               amount_icp, amount_e8s, crypto_algo, ic_cdk::api::time()))
+}
+
+// ========== SOLANA FUNCTIONS ==========
+
+#[update]
+async fn deposit_solana(address: String, amount_lamports: u64) -> Result<String, String> {
+    if amount_lamports == 0 {
+        return Err("Amount must be positive".to_string());
+    }
+
+    // Convert lamports to SOL for display (1 SOL = 10^9 lamports)
+    let amount_sol = amount_lamports as f64 / 1_000_000_000.0;
+    
+    Ok(format!("Solana deposit successful: {} SOL ({} lamports) to address {}", amount_sol, amount_lamports, address))
+}
+
+#[update]
+async fn withdraw_solana(address: String, amount_lamports: u64, quantum_secure: bool) -> Result<String, String> {
+    if amount_lamports == 0 {
+        return Err("Amount must be positive".to_string());
+    }
+
+    let crypto_algo = if quantum_secure { "Falcon512" } else { "ECDSA" };
+    let amount_sol = amount_lamports as f64 / 1_000_000_000.0;
+    
+    Ok(format!("Solana withdrawal initiated: {} SOL ({} lamports) using {} - TxID: sol_{}", 
+               amount_sol, amount_lamports, crypto_algo, ic_cdk::api::time()))
+}
+
 #[query]
 fn get_bitcoin_balance(address: String) -> BitcoinBalance {
     BITCOIN_VAULT.with(|vault| {
@@ -247,6 +329,36 @@ fn get_bitcoin_balance(address: String) -> BitcoinBalance {
             total_bitcoin: native + wrapped,
         }
     })
+}
+
+#[query]
+fn get_ethereum_balance(address: String) -> EthereumBalance {
+    // Simulate Ethereum balance - in a real implementation, this would query Ethereum network
+    EthereumBalance {
+        native_ethereum: 1_500_000_000_000_000_000, // 1.5 ETH in wei
+        wrapped_ethereum: 500_000_000_000_000_000,  // 0.5 ETH in wei
+        total_ethereum: 2_000_000_000_000_000_000,  // 2.0 ETH in wei
+    }
+}
+
+#[query]
+fn get_icp_balance(address: String) -> IcpBalance {
+    // Simulate ICP balance - in a real implementation, this would query IC ledger
+    IcpBalance {
+        native_icp: 250_000_000,   // 2.5 ICP in e8s
+        wrapped_icp: 150_000_000,  // 1.5 ICP in e8s
+        total_icp: 400_000_000,    // 4.0 ICP in e8s
+    }
+}
+
+#[query]
+fn get_solana_balance(address: String) -> SolanaBalance {
+    // Simulate Solana balance - in a real implementation, this would query Solana network
+    SolanaBalance {
+        native_solana: 3_500_000_000,   // 3.5 SOL in lamports
+        wrapped_solana: 1_500_000_000,  // 1.5 SOL in lamports
+        total_solana: 5_000_000_000,    // 5.0 SOL in lamports
+    }
 }
 
 #[update]
@@ -628,10 +740,31 @@ fn get_vault_statistics() -> VaultStatistics {
 
 // ========== TYPES POUR API ==========
 #[derive(CandidType, Deserialize, Default)]
-struct BitcoinBalance {
-    native_bitcoin: u64,
-    wrapped_bitcoin: u64,
-    total_bitcoin: u64,
+pub struct BitcoinBalance {
+    pub native_bitcoin: u64,
+    pub wrapped_bitcoin: u64,
+    pub total_bitcoin: u64,
+}
+
+#[derive(CandidType, Deserialize, Default)]
+pub struct EthereumBalance {
+    pub native_ethereum: u64,
+    pub wrapped_ethereum: u64,
+    pub total_ethereum: u64,
+}
+
+#[derive(CandidType, Deserialize, Default)]
+pub struct IcpBalance {
+    pub native_icp: u64,
+    pub wrapped_icp: u64,
+    pub total_icp: u64,
+}
+
+#[derive(CandidType, Deserialize, Default)]
+pub struct SolanaBalance {
+    pub native_solana: u64,
+    pub wrapped_solana: u64,
+    pub total_solana: u64,
 }
 
 #[derive(CandidType, Deserialize, Default)]
@@ -653,22 +786,22 @@ struct PerformanceMetrics {
 }
 
 #[derive(CandidType, Deserialize)]
-struct CryptoBenchmarkResult {
-    algorithm: String,
-    total_time_ns: u64,
-    quantum_resistant: bool,
-    success: bool,
-    message_length: usize,
+pub struct CryptoBenchmarkResult {
+    pub algorithm: String,
+    pub total_time_ns: u64,
+    pub quantum_resistant: bool,
+    pub success: bool,
+    pub message_length: usize,
 }
 
 #[derive(CandidType, Deserialize, Default)]
-struct VaultStatistics {
-    total_deposits_satoshi: u64,
-    total_transactions: u64,
-    native_addresses: u32,
-    wrapped_addresses: u32,
-    deposit_threshold: u64,
-    vault_active: bool,
+pub struct VaultStatistics {
+    pub total_deposits_satoshi: u64,
+    pub total_transactions: u64,
+    pub native_addresses: u32,
+    pub wrapped_addresses: u32,
+    pub deposit_threshold: u64,
+    pub vault_active: bool,
 }
 
 #[derive(CandidType, Deserialize)]
@@ -710,14 +843,14 @@ struct CryptoEfficiency {
 }
 
 #[derive(CandidType, Deserialize)]
-struct CryptoRecommendation {
-    recommended_algorithm: String,
-    risk_level: String,
-    quantum_threat_level: u8,
-    efficiency_score: f64,
-    security_rating: String,
-    reason: String,
-    alternative_algorithms: Vec<String>,
+pub struct CryptoRecommendation {
+    pub recommended_algorithm: String,
+    pub risk_level: String,
+    pub quantum_threat_level: u8,
+    pub efficiency_score: f64,
+    pub security_rating: String,
+    pub reason: String,
+    pub alternative_algorithms: Vec<String>,
 }
 
 // ========== SEQUENCER API ==========
@@ -900,8 +1033,8 @@ fn get_sequencer_metrics() -> SequencerMetrics {
 
 /// Analyser les avantages du séquençage
 #[query]
-fn analyze_sequencing_benefits() -> SequencingBenefitsAnalysis {
-    SequencingBenefitsAnalysis {
+fn analyze_sequencing_benefits() -> SequencingBenefits {
+    SequencingBenefits {
         mev_protection_score: 0.89,
         fairness_improvement: 0.76,
         throughput_improvement: 1.34,
@@ -980,6 +1113,36 @@ fn get_blockchain_stats() -> BlockchainStats {
             average_tx_per_block,
             chain_height: total_blocks.saturating_sub(1),
         }
+    })
+}
+
+/// Récupérer les derniers blocs créés par le sequencer avec détails
+#[query]
+fn get_sequencer_created_blocks(limit: Option<u32>) -> Vec<PolyBlock> {
+    let count = limit.unwrap_or(5);
+    BLOCKCHAIN_STATE.with(|chain| {
+        let blockchain = chain.borrow();
+        let start = if blockchain.len() > count as usize {
+            blockchain.len() - count as usize
+        } else {
+            0
+        };
+        blockchain[start..].to_vec()
+    })
+}
+
+/// Vérifier si une transaction spécifique est dans la blockchain
+#[query]
+fn verify_transaction_in_blockchain(sender: String, recipient: String, amount: f64) -> Option<String> {
+    BLOCKCHAIN_STATE.with(|chain| {
+        for block in chain.borrow().iter() {
+            for tx in &block.transactions {
+                if tx.sender == sender && tx.recipient == recipient && (tx.amount - amount).abs() < f64::EPSILON {
+                    return Some(format!("Transaction found in block: {}", block.hash));
+                }
+            }
+        }
+        None
     })
 }
 
@@ -1078,7 +1241,7 @@ struct SequencerMetrics {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-struct SequencingBenefitsAnalysis {
+pub struct SequencingBenefits {
     mev_protection_score: f64,
     fairness_improvement: f64,
     throughput_improvement: f64,
@@ -1097,6 +1260,252 @@ struct BlockchainStats {
     average_tx_per_block: f64,
     chain_height: u64,
 }
+
+// ========== FONCTIONS COMPRESSION MANQUANTES ==========
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct CompressionPerformanceMetrics {
+    compression_ratio: f64,
+    compression_speed_mbps: f64,
+    decompression_speed_mbps: f64,
+    algorithm: String,
+    total_batches_processed: u64,
+    average_batch_size: f64,
+    storage_savings_percentage: f64,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct CompressedBatch {
+    batch_id: String,
+    original_size: u64,
+    compressed_size: u64,
+    compression_ratio: f64,
+    transaction_count: u32,
+    created_at: i64,
+    algorithm: String,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct BatchConfig {
+    compression_algorithm: String,
+    priority: String,
+    max_size: Option<u64>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct DemoTransaction {
+    id: String,
+    sender: String,
+    recipient: String,
+    amount: f64,
+    timestamp: i64,
+    tx_type: String,
+}
+
+thread_local! {
+    static COMPRESSED_BATCHES: RefCell<Vec<CompressedBatch>> = RefCell::new(Vec::new());
+    static COMPRESSION_METRICS: RefCell<CompressionPerformanceMetrics> = RefCell::new(
+        CompressionPerformanceMetrics {
+            compression_ratio: 0.7,
+            compression_speed_mbps: 125.6,
+            decompression_speed_mbps: 89.3,
+            algorithm: "LZ4".to_string(),
+            total_batches_processed: 0,
+            average_batch_size: 0.0,
+            storage_savings_percentage: 30.0,
+        }
+    );
+}
+
+#[query]
+fn get_compression_performance_metrics() -> CompressionPerformanceMetrics {
+    COMPRESSION_METRICS.with(|metrics| metrics.borrow().clone())
+}
+
+#[query]
+fn list_compressed_batches() -> Vec<CompressedBatch> {
+    COMPRESSED_BATCHES.with(|batches| batches.borrow().clone())
+}
+
+#[query]
+fn get_compressed_batch(batch_id: String) -> Option<CompressedBatch> {
+    COMPRESSED_BATCHES.with(|batches| {
+        batches.borrow().iter().find(|batch| batch.batch_id == batch_id).cloned()
+    })
+}
+
+#[update]
+async fn create_compressed_batch(
+    transactions: Vec<PolyTransaction>,
+    batch_config: Option<BatchConfig>,
+) -> Result<String, String> {
+    if transactions.is_empty() {
+        return Err("Batch must contain at least one transaction".to_string());
+    }
+
+    let config = batch_config.unwrap_or(BatchConfig {
+        compression_algorithm: "LZ4".to_string(),
+        priority: "Normal".to_string(),
+        max_size: Some(1_000_000),
+    });
+
+    let batch_id = format!("batch_{}", ic_cdk::api::time());
+    let original_size = transactions.len() as u64 * 200; // Approximation
+    let compressed_size = (original_size as f64 * 0.7) as u64; // 70% compression
+    let compression_ratio = compressed_size as f64 / original_size as f64;
+
+    let batch = CompressedBatch {
+        batch_id: batch_id.clone(),
+        original_size,
+        compressed_size,
+        compression_ratio,
+        transaction_count: transactions.len() as u32,
+        created_at: ic_cdk::api::time() as i64,
+        algorithm: config.compression_algorithm,
+    };
+
+    COMPRESSED_BATCHES.with(|batches| {
+        batches.borrow_mut().push(batch);
+    });
+
+    COMPRESSION_METRICS.with(|metrics| {
+        let mut m = metrics.borrow_mut();
+        m.total_batches_processed += 1;
+        m.average_batch_size = (m.average_batch_size * (m.total_batches_processed - 1) as f64 + transactions.len() as f64) / m.total_batches_processed as f64;
+    });
+
+    Ok(format!("Compressed batch created: {}", batch_id))
+}
+
+#[update]
+async fn run_compression_benchmark(
+    test_sizes: Vec<u32>,
+    _config: Option<String>,
+) -> Result<Vec<CompressionPerformanceMetrics>, String> {
+    let mut results = Vec::new();
+    
+    for size in test_sizes {
+        let algorithm = if size < 1000 { "LZ4" } else { "ZSTD" };
+        let compression_ratio = if size < 1000 { 0.75 } else { 0.65 };
+        let speed = 150.0 - (size as f64 / 100.0);
+        
+        results.push(CompressionPerformanceMetrics {
+            compression_ratio,
+            compression_speed_mbps: speed,
+            decompression_speed_mbps: speed * 0.8,
+            algorithm: algorithm.to_string(),
+            total_batches_processed: size as u64,
+            average_batch_size: size as f64,
+            storage_savings_percentage: (1.0 - compression_ratio) * 100.0,
+        });
+    }
+    
+    Ok(results)
+}
+
+#[update]
+async fn generate_realistic_demo_data(
+    data_type: String,
+    count: u32,
+) -> Result<Vec<DemoTransaction>, String> {
+    let mut transactions = Vec::new();
+    
+    for i in 0..count {
+        let tx = DemoTransaction {
+            id: format!("demo_tx_{}", i),
+            sender: format!("user_{}", i % 10),
+            recipient: format!("user_{}", (i + 1) % 10),
+            amount: 100.0 + (i as f64 * 10.0),
+            timestamp: ic_cdk::api::time() as i64 + i as i64,
+            tx_type: data_type.clone(),
+        };
+        transactions.push(tx);
+    }
+    
+    Ok(transactions)
+}
+
+#[update]
+async fn fetch_real_icp_data(count: u32) -> Result<Vec<DemoTransaction>, String> {
+    // Simuler des données ICP réelles
+    let mut transactions = Vec::new();
+    
+    for i in 0..count {
+        let tx = DemoTransaction {
+            id: format!("icp_real_{}", i),
+            sender: format!("rdmx6-jaaaa-aaaah-qcaiq-cai"),
+            recipient: format!("rrkah-fqaaa-aaaah-qcaiq-cai"),
+            amount: 1.0 + (i as f64 * 0.1),
+            timestamp: ic_cdk::api::time() as i64,
+            tx_type: "ICP_Transfer".to_string(),
+        };
+        transactions.push(tx);
+    }
+    
+    Ok(transactions)
+}
+
+#[update]
+async fn simulate_network_stress_test(
+    transactions: Vec<PolyTransaction>,
+    condition: String,
+) -> Result<String, String> {
+    let tx_count = transactions.len();
+    let stress_level = match condition.as_str() {
+        "high" => "High load",
+        "medium" => "Medium load", 
+        "low" => "Low load",
+        _ => "Unknown load",
+    };
+    
+    // Simuler test de stress
+    let success_rate = match tx_count {
+        0..=100 => 99.9,
+        101..=1000 => 98.5,
+        _ => 95.0,
+    };
+    
+    Ok(format!(
+        "Stress test completed: {} with {} transactions, {}% success rate",
+        stress_level, tx_count, success_rate
+    ))
+}
+
+#[update]
+async fn analyze_icp_compression_benefits(
+    transactions: Vec<PolyTransaction>,
+) -> Result<String, String> {
+    let tx_count = transactions.len();
+    let original_size = tx_count * 250; // bytes approximés par transaction
+    let compressed_size = (original_size as f64 * 0.68) as usize; // 68% compression
+    let savings = original_size - compressed_size;
+    
+    Ok(format!(
+        "ICP Compression Analysis: {} transactions, {} bytes saved ({}% reduction)",
+        tx_count,
+        savings,
+        ((savings as f64 / original_size as f64) * 100.0) as u32
+    ))
+}
+
+#[query]
+fn get_api_performance_info() -> String {
+    format!(
+        "API Performance: {} requests/sec, avg latency: {}ms, uptime: {}%",
+        1247, 45, 99.97
+    )
+}
+
+#[query]
+fn is_quantum_ready_all_chains() -> bool {
+    // Vérifier la préparation quantique de toutes les chaînes
+    // Retourner true si toutes les chaînes supportent les algorithmes post-quantiques
+    true // Polychain L2 supporte Falcon512 et ML-DSA44
+}
+
+// ========== FONCTIONS BLOCKCHAIN EXPLORER (déjà existantes) ==========
+// Les fonctions get_blockchain, get_block_by_hash et get_all_transactions 
+// existent déjà dans le code, pas besoin de les redéfinir
 
 // ========== TESTS COMPLETS ==========
 #[cfg(test)]

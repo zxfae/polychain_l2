@@ -23,6 +23,8 @@ const TransactionSequencer = ({ actor }) => {
   const [selectedStrategy, setSelectedStrategy] = useState('fair');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [createdBlocks, setCreatedBlocks] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
 
   // --- Fonctions ---
   const displayMessage = (text, type) => {
@@ -35,6 +37,18 @@ const TransactionSequencer = ({ actor }) => {
     try {
       const metrics = await actor.get_sequencer_metrics();
       setSequencerData({ metrics });
+      
+      // Charger les blocs créés par le sequencer
+      if (actor.get_sequencer_created_blocks) {
+        const blocks = await actor.get_sequencer_created_blocks([3]); // Derniers 3 blocs
+        setCreatedBlocks(blocks);
+      }
+      
+      // Charger les transactions récentes
+      if (actor.get_all_transactions) {
+        const transactions = await actor.get_all_transactions();
+        setRecentTransactions(transactions.slice(-5)); // Dernières 5 transactions
+      }
     } catch (error) {
       console.error('Error loading sequencer data:', error);
       displayMessage('Failed to load sequencer data.', 'error');
@@ -77,7 +91,7 @@ const TransactionSequencer = ({ actor }) => {
       () => actor.add_transaction_to_sequencer(newTransaction.sender, newTransaction.recipient, parseFloat(newTransaction.amount)),
       (res) => {
         setNewTransaction({ sender: '', recipient: '', amount: '' });
-        return `Transaction added: ${res}`;
+        return `✅ Transaction added to sequencer queue! ${res} - Ready for batching into blockchain 📝`;
       },
       'Error adding transaction'
     );
@@ -85,7 +99,7 @@ const TransactionSequencer = ({ actor }) => {
 
   const sequenceBatch = () => handleAction(
     () => actor.sequence_transaction_batch([batchSize]),
-    (res) => `Batch created: ${res.batch_id} (${res.transaction_count} txs, ${res.sequencing_time_ms}ms)`,
+    (res) => `✅ Batch sequenced and added to blockchain! Batch ID: ${res.batch_id} (${res.transaction_count} transactions processed in ${res.sequencing_time_ms}ms) 🔗`,
     'Error sequencing batch'
   );
 
@@ -99,6 +113,14 @@ const TransactionSequencer = ({ actor }) => {
       <div className="sequencer-header">
         <h1><RefreshCw size={24} aria-hidden="true" /> PolyChain L2 Sequencer</h1>
         <p>Streamlined transaction sequencing with fair ordering.</p>
+        
+        <div className="sequencer-info">
+          <div className="info-badge">
+            <strong>🔄 Automatic Blockchain Integration:</strong> 
+            Sequenced transaction batches are automatically converted to blocks and added to the blockchain. 
+            No manual intervention required!
+          </div>
+        </div>
       </div>
 
       <div className="sequencer-metrics">
@@ -227,6 +249,88 @@ const TransactionSequencer = ({ actor }) => {
           </div>
         </div>
       </div>
+
+      {/* Workflow Status and Blockchain Integration */}
+      <div className="workflow-status">
+        <h2>📊 Sequencer → Blockchain Workflow</h2>
+        <div className="workflow-explanation">
+          <div className="workflow-step">
+            <div className="step-number">1</div>
+            <div className="step-content">
+              <h3>Add Transactions</h3>
+              <p>Transactions are added to the sequencer queue</p>
+              <div className="step-status">
+                Pending: {sequencerData.metrics.current_pending_count} transactions
+              </div>
+            </div>
+          </div>
+          
+          <div className="workflow-arrow">→</div>
+          
+          <div className="workflow-step">
+            <div className="step-number">2</div>
+            <div className="step-content">
+              <h3>Sequence Batch</h3>
+              <p>Transactions are ordered and batched</p>
+              <div className="step-status">
+                Processed: {sequencerData.metrics.total_transactions_sequenced} total
+              </div>
+            </div>
+          </div>
+          
+          <div className="workflow-arrow">→</div>
+          
+          <div className="workflow-step">
+            <div className="step-number">3</div>
+            <div className="step-content">
+              <h3>Auto-Add to Blockchain</h3>
+              <p>Sequenced batches are automatically added as blocks</p>
+              <div className="step-status">
+                Blocks created: {createdBlocks.length}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Blocks Created by Sequencer */}
+      {createdBlocks.length > 0 && (
+        <div className="created-blocks-section">
+          <h2>🔗 Recent Blocks Created by Sequencer</h2>
+          <div className="blocks-grid">
+            {createdBlocks.map((block, index) => (
+              <div key={block.hash} className="block-card">
+                <div className="block-header">
+                  <span className="block-title">Block #{index + 1}</span>
+                  <span className="block-time">
+                    {new Date(Number(block.timestamp) / 1000000).toLocaleTimeString()}
+                  </span>
+                </div>
+                <div className="block-details">
+                  <div className="block-hash">
+                    Hash: {block.hash.substring(0, 12)}...
+                  </div>
+                  <div className="block-transactions">
+                    Transactions: {block.transactions.length}
+                  </div>
+                  <div className="block-transactions-list">
+                    {block.transactions.slice(0, 2).map((tx, txIndex) => (
+                      <div key={txIndex} className="transaction-preview">
+                        {tx.sender.substring(0, 8)}... → {tx.recipient.substring(0, 8)}... ({tx.amount})
+                      </div>
+                    ))}
+                    {block.transactions.length > 2 && (
+                      <div className="more-transactions">
+                        +{block.transactions.length - 2} more...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {message.text && (
         <div className={`message ${message.type}`} role="alert">
