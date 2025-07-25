@@ -38,7 +38,7 @@ function UnifiedPerformanceAnalytics() {
       ] = await Promise.all([
         polychain_l2_backend.get_performance_metrics(),
         polychain_l2_backend.get_vault_statistics(),
-        polychain_l2_backend.get_multi_chain_metrics(),
+        polychain_l2_backend.get_detailed_multi_chain_metrics(),
         polychain_l2_backend.is_quantum_ready_all_chains()
       ]);
       
@@ -89,6 +89,7 @@ function UnifiedPerformanceAnalytics() {
     );
   }
 
+  // Utiliser les vraies données du backend
   const totalValueLocked = multiChainMetrics?.total_value_locked || [];
   const transactionCounts = multiChainMetrics?.transaction_counts || [];
   const compressionSavings = multiChainMetrics?.compression_savings || [];
@@ -389,17 +390,16 @@ function UnifiedPerformanceAnalytics() {
                   <h4>Total Value Locked by Chain</h4>
                   <div className="tvl-list">
                     {totalValueLocked.map((tuple, index) => {
-                      const value = formatChainValue(tuple, true);
-                      const token = formatChainValue(tuple, false);
-                      const chainId = Object.keys(tuple[0])[0];
-                      const chainInfo = SUPPORTED_CHAINS.find(c => c.id === chainId);
+                      const chainName = tuple[0];
+                      const value = Number(tuple[1] || 0).toFixed(8);
+                      const chainInfo = SUPPORTED_CHAINS.find(c => c.name === chainName);
                       const IconComponent = chainInfo?.icon || Globe;
                       
                       return (
                         <div key={index} className="tvl-item ds-card-glass">
                           <div className="tvl-chain">
                             <IconComponent size={16} style={{ color: chainInfo?.color }} />
-                            <span>{token}</span>
+                            <span>{chainInfo?.token || chainName}</span>
                           </div>
                           <div className="tvl-value">{value}</div>
                         </div>

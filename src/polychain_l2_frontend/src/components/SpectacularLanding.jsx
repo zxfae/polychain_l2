@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { polychain_l2_backend } from 'declarations/polychain_l2_backend';
 import { 
   Zap, Shield, Globe, TrendingUp, Brain, Award,
-  ChevronRight, Play, Gauge, Eye, Building2, Link
+  ChevronRight, Play, Gauge, Eye, Building2, Link, Lock, Key
 } from 'lucide-react';
 import './spectacular-landing.css';
 
@@ -170,32 +170,36 @@ const SpectacularLanding = ({ onNavigate }) => {
 
   const features = [
     {
-      icon: Gauge,
-      title: "Live Dashboard",
-      description: "Métriques temps réel avec animations fluides",
+      icon: Lock,
+      title: "Crypto Center",
+      description: "Cryptographic command center with 4 quantum-safe algorithms",
+      color: "#ff6644",
+      highlight: "QUANTUM-SAFE",
+      route: "crypto-showcase"
+    },
+    {
+      icon: Key,
+      title: "Crypto Tools Hub",
+      description: "AI, benchmarks, and advanced cryptographic tools",
       color: "#4488ff",
-      highlight: "NEW"
-    },
-    {
-      icon: Brain,
-      title: "Quantum Simulator",
-      description: "Simulateur interactif de menaces quantiques",
-      color: "#ff4488",
-      highlight: "AI-POWERED"
-    },
-    {
-      icon: Eye,
-      title: "Transaction Flow",
-      description: "Visualisation des flux multi-chaînes",
-      color: "#44ff88",
-      highlight: "REAL-TIME"
+      highlight: "AI-POWERED",
+      route: "crypto-tools"
     },
     {
       icon: Zap,
       title: "Crypto Race",
-      description: "Course d'algorithmes cryptographiques",
+      description: "Real-time race between cryptographic algorithms",
       color: "#ffaa44",
-      highlight: "INTERACTIVE"
+      highlight: "LIVE RACE",
+      route: "crypto-race"
+    },
+    {
+      icon: Eye,
+      title: "Blockchain Explorer",
+      description: "Explore cryptographically signed transactions",
+      color: "#44ff88",
+      highlight: "INTERACTIVE",
+      route: "explorer"
     }
   ];
 
@@ -203,7 +207,7 @@ const SpectacularLanding = ({ onNavigate }) => {
     <div 
       className="feature-card"
       style={{ '--feature-color': feature.color, '--delay': `${index * 0.1}s` }}
-      onClick={() => onNavigate(getFeatureRoute(feature.title))}
+      onClick={() => onNavigate(getFeatureRoute(feature))}
     >
       <div className="feature-highlight">
         {feature.highlight}
@@ -223,14 +227,8 @@ const SpectacularLanding = ({ onNavigate }) => {
     </div>
   );
 
-  const getFeatureRoute = (title) => {
-    const routes = {
-      "Live Dashboard": "dashboard",
-      "Quantum Simulator": "quantum-sim",
-      "Transaction Flow": "flow-viz",
-      "Crypto Race": "crypto-race"
-    };
-    return routes[title] || "dashboard";
+  const getFeatureRoute = (feature) => {
+    return feature.route || "crypto-showcase";
   };
 
   const StatCounter = ({ value, label, suffix = "" }) => (
@@ -256,7 +254,7 @@ const SpectacularLanding = ({ onNavigate }) => {
             </div>
             
             <h1 className="hero-title">
-              <span className="gradient-text">Polychain L2</span>
+              <span className="gradient-text">Polychain</span>
               <br />
               The Future of Multi-Chain
             </h1>
@@ -270,18 +268,18 @@ const SpectacularLanding = ({ onNavigate }) => {
             <div className="hero-actions">
               <button 
                 className="cta-primary"
-                onClick={() => onNavigate('dashboard')}
+                onClick={() => onNavigate('explorer')}
               >
                 <Play size={20} />
-                Launch Live Demo
+                Blockchain Explorer
               </button>
               
               <button 
                 className="cta-secondary"
-                onClick={() => onNavigate('multi-vault')}
+                onClick={() => onNavigate('tx-flow')}
               >
                 <Building2 size={20} />
-                Try Multi-Chain Vault
+                Sequencer work
               </button>
             </div>
           </div>
@@ -323,6 +321,66 @@ const SpectacularLanding = ({ onNavigate }) => {
               label="Performance Boost" 
               suffix="%" 
             />
+          </div>
+        </section>
+
+        {/* Cryptography Showcase Section */}
+        <section className="crypto-showcase-section">
+          <div className="section-header">
+            <h2>
+              <Lock size={32} />
+              Advanced Cryptography Engine
+            </h2>
+            <p>4 cutting-edge algorithms including post-quantum signatures</p>
+          </div>
+          
+          <div className="crypto-algorithms">
+            <div className="crypto-algo classical" onClick={() => onNavigate('crypto-showcase')}>
+              <div className="algo-icon">
+                <Key size={24} />
+              </div>
+              <h3>ECDSA</h3>
+              <p>95.5% efficiency</p>
+              <div className="algo-badge classical">Classical</div>
+            </div>
+            
+            <div className="crypto-algo classical" onClick={() => onNavigate('crypto-showcase')}>
+              <div className="algo-icon">
+                <Shield size={24} />
+              </div>
+              <h3>Schnorr</h3>
+              <p>92.8% efficiency</p>
+              <div className="algo-badge classical">Enhanced</div>
+            </div>
+            
+            <div className="crypto-algo quantum" onClick={() => onNavigate('crypto-showcase')}>
+              <div className="algo-icon">
+                <Lock size={24} />
+              </div>
+              <h3>Falcon512</h3>
+              <p>78.2% efficiency</p>
+              <div className="algo-badge quantum">Quantum-Safe</div>
+            </div>
+            
+            <div className="crypto-algo quantum" onClick={() => onNavigate('crypto-showcase')}>
+              <div className="algo-icon">
+                <Brain size={24} />
+              </div>
+              <h3>ML-DSA44</h3>
+              <p>85.6% efficiency</p>
+              <div className="algo-badge quantum">Quantum-Safe</div>
+            </div>
+          </div>
+          
+          <div className="crypto-cta">
+            <button 
+              className="cta-button crypto-cta-btn"
+              onClick={() => onNavigate('crypto-showcase')}
+            >
+              <Lock size={20} />
+              Explore Crypto Center
+              <ChevronRight size={20} />
+            </button>
           </div>
         </section>
 

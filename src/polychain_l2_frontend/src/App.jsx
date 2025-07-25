@@ -1,16 +1,10 @@
-// App.jsx - Version avec le nouveau design
-
 import React, { useState, useEffect } from 'react';
 import { polychain_l2_backend } from 'declarations/polychain_l2_backend';
 import { safeConvertObject } from './utils/bigint-utils';
-import { Shield, Activity, AlertTriangle, CheckCircle, Building2, BarChart3, Link, Menu, X, Gauge, Zap, Brain, Eye, Home } from 'lucide-react';
-
-// Importez vos composants de page ici
+import { Shield, Activity, AlertTriangle, CheckCircle, Building2, BarChart3, Link, Menu, X, Gauge, Zap, Brain, Eye, Home, Lock } from 'lucide-react';
 import MultiChainUnifiedVault from './components/MultiChainUnifiedVault';
 import UnifiedPerformanceAnalytics from './components/UnifiedPerformanceAnalytics';
 import CryptoToolsHub from './components/CryptoToolsHub';
-
-// Composants spectaculaires avec vraies données
 import SpectacularBlockchainExplorer from './components/SpectacularBlockchainExplorer';
 import SpectacularTransactionSequencer from './components/SpectacularTransactionSequencer';
 import RealtimeDashboard from './components/RealtimeDashboard';
@@ -18,8 +12,7 @@ import QuantumThreatSimulator from './components/QuantumThreatSimulator';
 import TransactionFlowVisualizer from './components/TransactionFlowVisualizer';
 import CryptoRace from './components/CryptoRace';
 import SpectacularLanding from './components/SpectacularLanding';
-
-// Importez le NOUVEAU fichier CSS
+import CryptographyShowcase from './components/CryptographyShowcase';
 import './App.css';
 
 function App() {
@@ -30,18 +23,14 @@ function App() {
   const [isNavOpen, setIsNavOpen] = useState(false);
 
   const tabs = [
-    // Page d'accueil spectaculaire
-    { id: 'home', label: 'Home', icon: Home, component: <SpectacularLanding onNavigate={setActiveTab} />, description: "Page d'accueil spectaculaire avec présentation du projet." },
-    
-    // Composants spectaculaires avec vraies données
+    { id: 'home', label: 'Home', icon: Home, component: <SpectacularLanding onNavigate={setActiveTab} />,description: "Polychain Home"},
     { id: 'explorer', label: 'Blockchain Explorer', icon: Eye, component: <SpectacularBlockchainExplorer actor={polychain_l2_backend} />, description: "Explorez les blocs et transactions avec style spectaculaire." },
     { id: 'sequencer', label: 'TX Sequencer', icon: Activity, component: <SpectacularTransactionSequencer actor={polychain_l2_backend} />, description: "Visualisez le séquenceur de transactions avec animations." },
     { id: 'multi-vault', label: 'Multi-Chain Vault', icon: Building2, component: <MultiChainUnifiedVault />, description: "Gérez vos actifs sur plusieurs chaînes." },
     { id: 'crypto-tools', label: 'Crypto Tools Hub', icon: Shield, component: <CryptoToolsHub />, description: "Accédez à des outils cryptographiques." },
-    { id: 'analytics', label: 'Performance Analytics', icon: BarChart3, component: <UnifiedPerformanceAnalytics />, description: "Analysez les performances du réseau." },
-    
-    // Nouveaux composants avec vraies données
+    { id: 'crypto-showcase', label: 'Crypto Center', icon: Lock, component: <CryptographyShowcase />, description: "Centre de commande cryptographique spectaculaire." },
     { id: 'crypto-race', label: 'Crypto Race', icon: Zap, component: <CryptoRace />, description: "Vrais benchmarks de tes algorithmes cryptographiques." },
+    { id: 'tx-flow', label: 'Transaction Flow', icon: Link, component: <TransactionFlowVisualizer />, description: "Visualiseur de flux de transactions en temps réel." },
     { id: 'dashboard', label: 'Live Dashboard', icon: Gauge, component: <RealtimeDashboard />, description: "Dashboard avec tes vraies métriques animées." },
   ];
 
@@ -85,8 +74,8 @@ function App() {
   const renderSidebar = () => (
     <div className="sidebar-content">
       <div className="logo-container">
-        <div className="logo-icon">P</div>
-        <h1>Polychain L2</h1>
+<img src="/Polychain.png" alt="Polychain L2 Logo" className="logo-image" />
+        <h1>Polychain</h1>
         <p>Universal Multi-Chain</p>
       </div>
       <nav className="nav-menu">
@@ -157,10 +146,6 @@ function App() {
         {/* Contenu principal */}
         <main className="main-content">
           <div className="card">
-            <div className="card-header">
-              <h2>{activeComponent?.label}</h2>
-              <p>{activeComponent?.description}</p>
-            </div>
             <div className="card-body">
               {activeComponent?.component}
             </div>

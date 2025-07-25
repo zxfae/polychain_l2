@@ -1,86 +1,424 @@
-/* CryptoToolsHub.css - Design aligné avec App.css */
+/* --- CryptoToolsHub Component Styles :: v3.0 with SpectacularLanding Theme --- */
 
-/* Conteneur principal */
-.tools-hub-container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
+/* ==========================================================================
+   Component-specific variables (aligned with SpectacularLanding)
+   ========================================================================== */
+:root {
+  --status-success: #44ff88;
+  --status-warning: #ffaa44;
+  --status-danger: #ff4444;
+  --accent-blue: #4488ff;
+  --hub-gradient: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
+  --hub-glow: 0 0 15px rgba(68, 255, 136, 0.5);
 }
 
-/* Barre de navigation des onglets */
+/* ==========================================================================
+   Background & Main Container
+   ========================================================================== */
+.background-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card {
+  position: relative;
+  min-height: 100vh;
+  background: var(--hub-gradient);
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  z-index: 2;
+}
+
+.hub-content {
+  position: relative;
+  z-index: 3;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* ==========================================================================
+   Card Header
+   ========================================================================== */
+.card-header {
+  margin-bottom: 1.5rem;
+  animation: fadeInUp 1s ease-out;
+}
+
+.card-header h2 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: linear-gradient(45deg, #4488ff, #44ff88, #ffaa44, #ff4488);
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 4s ease-in-out infinite;
+}
+
+.card-header h4 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.card-header h4 svg {
+  width: 20px;
+  height: 20px;
+  color: #44ff88;
+}
+
+.card-header p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+}
+
+/* ==========================================================================
+   Tabs Navigation
+   ========================================================================== */
 .tools-nav {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: var(--space-3);
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  animation: fadeInUp 0.8s ease-out;
 }
 
 .tab-button {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  background: none;
-  border: 1px solid transparent;
-  border-radius: var(--border-radius-md);
-  color: var(--text-secondary);
-  font-size: 14px;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.tab-button:hover {
-  background-color: var(--surface-hover);
-  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 .tab-button.active {
-  background-color: var(--primary-accent);
-  color: white;
-  box-shadow: var(--shadow-sm);
+  background: rgba(68, 255, 136, 0.1);
+  color: #44ff88;
+  border-color: rgba(68, 255, 136, 0.3);
+  box-shadow: var(--hub-glow);
 }
 
-/* Conteneur pour le contenu de l'onglet actif */
+.tab-button:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   Tab Content
+   ========================================================================== */
 .tab-content-wrapper {
-  animation: tool-fade-in 0.5s ease;
+  animation: fadeInUp 0.5s ease-out;
 }
 
-@keyframes tool-fade-in {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
+.tab-main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-/* Styles spécifiques pour la compression */
+/* ==========================================================================
+   Inner Card & Forms
+   ========================================================================== */
+.card.ds-card-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 15px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.8s ease-out 0.2s forwards;
+  position: relative;
+}
+
+.card.ds-card-glass:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.3);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 0.5rem;
+}
+
+.form-input,
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 1rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.form-input:focus,
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: #44ff88;
+  box-shadow: var(--hub-glow);
+  outline: none;
+}
+
+/* ==========================================================================
+   Buttons & Indicators
+   ========================================================================== */
+.button,
+.button-primary,
+.button-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.button-primary {
+  background: linear-gradient(45deg, #4488ff, #6644ff);
+  color: #ffffff;
+}
+
+.button-secondary {
+  background: linear-gradient(45deg, #a68b00, #d4a017);
+  color: #ffffff;
+}
+
+.button:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 15px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #44ff88;
+  border-top: 4px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.status-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+}
+
+/* ==========================================================================
+   Content Specific Styles (AI, Benchmark, Compression)
+   ========================================================================== */
+.recommendation-result {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.recommendation-result > div {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.recommended-algo .value {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.results-table {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.results-table > div {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.results-table > div:first-child {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.quantum-safe {
+  color: #44ff88;
+}
+
+.quantum-classic {
+  color: #ffaa44;
+}
+
 .batch-item-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 0.5rem;
   max-height: 250px;
   overflow-y: auto;
-  padding: var(--space-2);
-  background: var(--bg-secondary);
-  border-radius: var(--border-radius-md);
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
 }
+
 .batch-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: var(--space-2);
-  border-radius: var(--border-radius-sm);
-  font-size: 12px;
+  padding: 0.5rem;
+  font-size: 0.85rem;
   font-family: monospace;
 }
-.batch-item:nth-child(odd) {
-  background-color: var(--surface-hover);
+
+/* ==========================================================================
+   Animations & Responsive Design
+   ========================================================================== */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-/* Responsive */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
 @media (max-width: 768px) {
-  .ai-grid,
-  .benchmark-grid,
-  .compression-grid {
-    grid-template-columns: 1fr;
+  .card { padding: 1.5rem; }
+  .hub-content { padding: 0 1rem; }
+  .card-header h2 { font-size: 2rem; }
+  .tools-nav { flex-direction: column; align-items: stretch; }
+  .tab-button { border-radius: 10px; margin-bottom: 0.5rem; }
+}
+
+/* Accessibility settings remain the same */
+/* ==========================================================================
+   Accessibility Enhancements
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card.ds-card-glass,
+  .tab-button,
+  .tab-content-wrapper,
+  .loading-spinner,
+  .floating-orb {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .card-header h2,
+  .card-header h4,
+  .card-header p,
+  .form-label,
+  .form-group label,
+  .status-indicator .label,
+  .status-indicator .value,
+  .recommendation-result div,
+  .recommendation-reason p,
+  .results-table > div,
+  .batch-item {
+    color: #ffffff;
+    text-shadow: none;
+    -webkit-text-fill-color: #ffffff;
+  }
+
+  .card,
+  .card.ds-card-glass,
+  .results-table,
+  .batch-item-list,
+  .recommendation-result div,
+  .recommendation-reason,
+  .alternative-algorithms {
+    background: rgba(0, 0, 0, 0.8);
+    border-color: #ffffff;
+    backdrop-filter: none;
+  }
+
+  .form-input,
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #ffffff;
+  }
+
+  .button-primary,
+  .button-secondary {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  .tab-button,
+  .tab-button.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border-color: #ffffff;
+  }
+
+  .floating-orb {
+    background: #ffffff;
+    color: #000000;
   }
 }

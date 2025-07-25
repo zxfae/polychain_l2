@@ -1,179 +1,215 @@
-/* --- ChainSelector Component Styles :: v2.0 with Design System Integration --- */
+/* --- ChainSelector Component Styles :: v3.1 aligned with BlockchainExplorer --- */
 
 /* ==========================================================================
-   Component-specific variables (Business Logic Colors - Preserved)
+   Component-specific variables (aligned with BlockchainExplorer and MultiChainUnifiedVault)
    ========================================================================== */
 :root {
-  /* Chain-specific colors (Business Logic - PRESERVED) */
-  --chain-btc: #a68b00;            /* Golden bronze for Bitcoin */
-  --chain-eth: #1e3a8a;            /* Deep navy for Ethereum */
-  --chain-icp: #15803d;            /* Forest green for ICP */
-  --chain-sol: #7f1d1d;            /* Deep bordeaux for Solana */
+  /* Chain-specific colors (preserved) */
+  --chain-btc: #a68b00; /* Golden bronze for Bitcoin */
+  --chain-eth: #1e3a8a; /* Deep navy for Ethereum */
+  --chain-icp: #15803d; /* Forest green for ICP */
+  --chain-sol: #7f1d1d; /* Deep bordeaux for Solana */
 
-  /* Component-specific effects */
+  /* Colors consistent with BlockchainExplorer */
+  --status-success: #44ff88;
+  --status-warning: #ffaa44;
+  --status-danger: #ff6644;
+  --accent-blue: #4488ff;
+
+  /* Effects aligned with BlockchainExplorer */
+  --selector-gradient: linear-gradient(
+    135deg, 
+    #0a0a0a 0%, 
+    #1a1a2e 25%, 
+    #16213e 50%, 
+    #0f3460 75%, 
+    #533483 100%
+  );
   --selector-shimmer: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.2) 50%,
+    rgba(68, 255, 136, 0.3) 50%,
     transparent 100%
   );
-  --selector-scanline: linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.05) 50%,
-    rgba(0, 0, 0, 0) 100%
-  );
+  --selector-glow: 0 0 15px rgba(68, 255, 136, 0.5);
 }
 
 /* ==========================================================================
-   Chain Selector Container (extends .ds-card)
+   Background Canvas (Particle Animation)
+   ========================================================================== */
+.background-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.5;
+}
+
+/* ==========================================================================
+   Chain Selector Container
    ========================================================================== */
 .chain-selector {
-  /* Card behavior handled by .ds-card */
-  margin-bottom: var(--ds-space-10);
-  font-family: var(--ds-font-primary);
-  background: linear-gradient(180deg, var(--ds-glass-bg), rgba(21, 128, 61, 0.1));
-  box-shadow: inset 0 0 80px rgba(255, 255, 255, 0.03), var(--ds-shadow-lg);
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 2rem;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  z-index: 2;
 }
 
-.chain-selector::before {
-  /* Override ds-card accent line with scanline effect */
-  background: var(--selector-scanline);
-  background-size: 100% 16px;
-  height: 100%;
-  opacity: 0.3;
-  animation: scan 4s linear infinite;
+.selector-content {
+  position: relative;
+  z-index: 3;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
 }
 
 /* ==========================================================================
-   Header
+   Panel Header
    ========================================================================== */
-.chain-selector-header {
+.panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--ds-space-6);
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  animation: fadeInUp 0.8s ease-out;
 }
 
-.chain-selector-header h3 {
-  margin: 0;
-  font-family: var(--ds-font-display);
-  font-size: var(--ds-text-2xl);
+.panel-title {
+  font-size: 1.6rem;
   font-weight: 700;
-  color: var(--ds-text-primary);
+  color: #ffffff;
   display: flex;
   align-items: center;
-  gap: var(--ds-space-3);
-  position: relative;
+  gap: 0.75rem;
+  background: linear-gradient(45deg, #4488ff, #44ff88);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 4s ease-in-out infinite;
 }
 
-.chain-selector-header h3 svg {
-  width: 20px;
-  height: 20px;
-  color: var(--ds-secondary);
-  filter: drop-shadow(0 0 6px var(--ds-secondary));
-  transition: var(--ds-transition-base);
+.panel-title svg {
+  width: 24px;
+  height: 24px;
+  color: var(--status-success);
+  filter: drop-shadow(0 0 8px rgba(68, 255, 136, 0.5));
+  transition: transform 0.3s ease;
 }
 
-.chain-selector-header h3:hover svg {
-  transform: scale(1.1);
+.panel-title:hover svg {
+  transform: scale(1.1) rotate(5deg);
 }
 
 .quantum-badge {
-  /* Extends .ds-badge with selector-specific effects */
-  background: var(--ds-gradient-primary);
-  box-shadow: var(--ds-shadow-glow);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(68, 255, 136, 0.1);
+  color: var(--status-success);
+  padding: 0.75rem 1.5rem;
+  border-radius: 30px;
+  border: 1px solid rgba(68, 255, 136, 0.3);
+  font-size: 0.9rem;
+  font-weight: 600;
+  animation: glow 3s ease-in-out infinite;
   position: relative;
   overflow: hidden;
-  transition: var(--ds-transition-base);
+}
+
+.quantum-badge svg {
+  width: 16px;
+  height: 16px;
+  color: var(--status-success);
 }
 
 .quantum-badge::after {
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
+  left: -100%;
   width: 100%;
   height: 100%;
   background: var(--selector-shimmer);
-  transform: translateX(-100%);
-  animation: shimmer 3s var(--ds-ease-out) infinite;
-  opacity: 0.5;
-}
-
-.quantum-badge svg {
-  width: 16px;
-  height: 16px;
-  color: var(--ds-text-inverse);
-  z-index: 1;
-}
-
-.quantum-badge:hover {
-  filter: brightness(1.1);
-  transform: scale(1.05);
-  box-shadow: 0 0 20px var(--ds-secondary);
+  animation: shimmer 3s ease-out infinite;
 }
 
 /* ==========================================================================
-   Chain Grid (extends .ds-grid .ds-grid-auto)
+   Chains Horizontal Container
    ========================================================================== */
-.chain-grid {
-  /* Grid behavior handled by design system classes */
-  gap: var(--ds-space-8);
+.chains-horizontal-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 1.5rem;
+  padding: 1rem 0.5rem;
+  margin: 0 -0.5rem;
+}
+
+.chains-horizontal-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.chains-horizontal-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.chains-horizontal-container::-webkit-scrollbar-thumb {
+  background: rgba(68, 136, 255, 0.6);
+  border-radius: 4px;
+}
+
+.chains-horizontal-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(68, 136, 255, 0.8);
 }
 
 /* ==========================================================================
-   Chain Card (extends .ds-card-glass)
+   Chain Item
    ========================================================================== */
-.chain-card {
-  /* Glass card behavior handled by design system */
+.chain-item {
+  flex: 0 0 280px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 1.5rem;
   cursor: pointer;
-  transition: var(--ds-transition-base);
-  animation: cardFadeIn 0.8s var(--ds-transition-base) forwards;
-  animation-delay: calc(var(--i, 0) * 0.15s);
-  position: relative;
+  transition: all 0.3s ease;
+  border-left: 5px solid transparent;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  animation: fadeInUp 0.8s ease-out calc(var(--i, 0) * 0.15s) forwards;
 }
 
-.chain-card:hover,
-.chain-card:focus {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: var(--ds-shadow-glow);
-  border-color: var(--chain-color);
-  background: color-mix(in srgb, var(--chain-color) 20%, var(--ds-glass-bg));
+.chain-item:hover,
+.chain-item:focus {
+  background: rgba(255, 255, 255, 0.12);
+  border-left-color: var(--chain-color);
+  transform: translateY(-5px);
+  box-shadow: var(--selector-glow);
 }
 
-.chain-card.selected {
-  background: color-mix(in srgb, var(--chain-color) 25%, var(--ds-glass-bg));
-  border: 2px solid var(--chain-color);
-  box-shadow: 0 0 25px color-mix(in srgb, var(--chain-color) 50%, transparent);
+.chain-item.selected {
+  background: rgba(68, 255, 136, 0.12);
+  border-left-color: var(--chain-color);
+  transform: translateY(-5px);
+  box-shadow: var(--selector-glow);
 }
 
-.chain-card:focus {
-  outline: 3px solid var(--ds-secondary);
+.chain-item:focus {
+  outline: 3px solid var(--status-success);
   outline-offset: 4px;
-}
-
-.chain-card::before {
-  /* Override ds-card accent line with scanline */
-  background: var(--selector-scanline);
-  background-size: 100% 12px;
-  height: 100%;
-  opacity: 0.2;
-  animation: scan 3s linear infinite;
-}
-
-.chain-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--selector-shimmer);
-  transform: translateX(-100%);
-  animation: shimmer 2.5s var(--ds-ease-out) infinite;
-  opacity: 0.4;
-  pointer-events: none;
 }
 
 /* ==========================================================================
@@ -182,56 +218,40 @@
 .chain-header {
   display: flex;
   align-items: center;
-  margin-bottom: var(--ds-space-4);
-  position: relative;
-  z-index: 1;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .chain-header svg {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   color: var(--chain-color);
   filter: drop-shadow(0 0 8px var(--chain-color));
-  transition: var(--ds-transition-base);
+  transition: transform 0.3s ease;
 }
 
-.chain-header svg:hover {
+.chain-header:hover svg {
   transform: scale(1.15);
 }
 
 .chain-info {
-  margin-left: var(--ds-space-4);
   display: flex;
   flex-direction: column;
 }
 
 .chain-name {
-  font-family: var(--ds-font-display);
-  font-weight: 700;
-  font-size: var(--ds-text-xl);
-  color: var(--ds-text-primary);
-  position: relative;
-  transition: var(--ds-transition-base);
-}
-
-.chain-name:hover::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: var(--selector-shimmer);
-  animation: glitch 1.5s infinite;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
 }
 
 .chain-token {
-  font-size: var(--ds-text-sm);
-  color: var(--ds-text-primary);
+  font-size: 0.85rem;
+  color: #ffffff;
   background: color-mix(in srgb, var(--chain-color) 30%, transparent);
-  padding: var(--ds-space-1) var(--ds-space-2);
-  border-radius: var(--ds-radius-sm);
-  margin-top: var(--ds-space-1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+  margin-top: 0.25rem;
   align-self: flex-start;
   font-weight: 600;
 }
@@ -240,12 +260,9 @@
    Chain Description
    ========================================================================== */
 .chain-description {
-  color: var(--ds-text-secondary);
-  font-size: var(--ds-text-sm);
-  line-height: 1.7;
-  letter-spacing: 0.01em;
-  position: relative;
-  z-index: 1;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 /* ==========================================================================
@@ -253,34 +270,29 @@
    ========================================================================== */
 .chain-metrics {
   display: flex;
-  gap: var(--ds-space-5);
-  margin-bottom: var(--ds-space-3);
-  position: relative;
-  z-index: 1;
+  gap: 1rem;
+  margin-top: 0.75rem;
 }
 
 .metric {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  font-size: var(--ds-text-sm);
+  font-size: 0.85rem;
 }
 
 .metric span:first-child {
-  color: var(--ds-text-secondary);
+  color: rgba(255, 255, 255, 0.7);
   font-weight: 500;
 }
 
 .metric-value {
   font-weight: 700;
   color: var(--chain-color);
-  margin-top: var(--ds-space-1);
-  text-shadow: 0 0 4px var(--chain-color);
-  position: relative;
+  margin-top: 0.25rem;
 }
 
 .metric-value.quantum {
-  color: var(--chain-icp);
+  color: var(--status-success);
 }
 
 /* ==========================================================================
@@ -288,29 +300,59 @@
    ========================================================================== */
 .selection-indicator {
   position: absolute;
-  top: var(--ds-space-4);
-  right: var(--ds-space-4);
+  top: 1rem;
+  right: 1rem;
   display: flex;
   align-items: center;
-  gap: var(--ds-space-2);
-  font-size: var(--ds-text-xs);
+  gap: 0.5rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--chain-color);
   text-shadow: 0 0 4px var(--chain-color);
-  z-index: 2;
 }
 
 .pulse-dot {
   width: 8px;
   height: 8px;
   background: var(--chain-color);
-  border-radius: var(--ds-radius-full);
+  border-radius: 50%;
   box-shadow: 0 0 12px var(--chain-color);
   animation: pulse 1.8s infinite ease-in-out;
 }
 
 /* ==========================================================================
-   Animations (component-specific)
+   Floating Orbs
+   ========================================================================== */
+.floating-orb {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  background: rgba(68, 255, 136, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 2;
+}
+
+.orb-1 {
+  top: 10%;
+  left: 5%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.orb-2 {
+  bottom: 15%;
+  right: 10%;
+  animation: float 6s ease-in-out infinite 1.5s;
+}
+
+/* ==========================================================================
+   Animations
    ========================================================================== */
 @keyframes pulse {
   0% { opacity: 1; transform: scale(1); box-shadow: 0 0 12px var(--chain-color); }
@@ -318,68 +360,75 @@
   100% { opacity: 1; transform: scale(1); box-shadow: 0 0 12px var(--chain-color); }
 }
 
-@keyframes scan {
-  0% { background-position: 0 0; }
-  100% { background-position: 0 40px; }
-}
-
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
 }
 
-@keyframes cardFadeIn {
-  from { opacity: 0; transform: translateY(15px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
-@keyframes glitch {
-  0% { transform: translate(0); opacity: 1; }
-  20% { transform: translate(-2px, 1px); opacity: 0.8; }
-  40% { transform: translate(2px, -1px); opacity: 0.9; }
-  60% { transform: translate(-1px, 2px); opacity: 0.85; }
-  80% { transform: translate(1px, -2px); opacity: 0.9; }
-  100% { transform: translate(0); opacity: 1; }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-10px) rotate(3deg); }
+  50% { transform: translateY(0px) rotate(0deg); }
+  75% { transform: translateY(-5px) rotate(-3deg); }
 }
 
 /* ==========================================================================
-   Responsive Design (using design system breakpoints)
+   Responsive Design
    ========================================================================== */
 @media (max-width: 1024px) {
-  .chain-grid {
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  .chain-selector {
+    padding: 1.5rem;
   }
-  .chain-selector-header h3 {
-    font-size: var(--ds-text-xl);
+
+  .selector-content {
+    padding: 0 1rem;
   }
-  .chain-name {
-    font-size: var(--ds-text-lg);
+
+  .panel-title {
+    font-size: 1.4rem;
+  }
+
+  .chain-item {
+    flex: 0 0 260px;
   }
 }
 
 @media (max-width: 768px) {
-  .chain-selector {
-    padding: var(--ds-space-6);
-  }
-  .chain-grid {
-    grid-template-columns: 1fr;
-  }
-  .chain-selector-header {
+  .panel-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--ds-space-3);
+    gap: 0.75rem;
   }
-  .chain-selector-header h3 {
-    font-size: var(--ds-text-xl);
+
+  .panel-title {
+    font-size: 1.3rem;
   }
+
   .quantum-badge {
-    font-size: var(--ds-text-xs);
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
   }
+
+  .chain-item {
+    flex: 0 0 240px;
+  }
+
   .chain-name {
-    font-size: var(--ds-text-lg);
+    font-size: 1rem;
   }
+
   .chain-description {
-    font-size: var(--ds-text-sm);
+    font-size: 0.85rem;
   }
 }
 
@@ -387,54 +436,61 @@
    Accessibility Enhancements
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-  /* Chain selector specific reduced motion overrides */
-  .chain-card,
+  .chain-selector,
+  .chain-item,
   .pulse-dot,
   .quantum-badge,
-  .chain-selector,
-  .chain-card::before,
-  .chain-card::after,
-  .quantum-badge::after {
-    animation: none !important;
-    transition: none !important;
-  }
-  
+  .panel-title,
+  .panel-title svg,
   .chain-header svg,
-  .chain-name::after {
+  .floating-orb {
+    animation: none !important;
     transition: none !important;
   }
 }
 
 @media (prefers-contrast: high) {
-  /* High contrast chain selector specific overrides */
+  .panel-title,
   .chain-name,
   .chain-token,
   .chain-description,
   .metric span:first-child,
   .metric-value,
   .selection-indicator {
-    color: var(--ds-text-primary);
+    color: #ffffff;
     text-shadow: none;
+    -webkit-text-fill-color: #ffffff;
   }
-  
-  .chain-card {
-    border-color: var(--ds-border);
-    background: var(--ds-surface);
+
+  .chain-selector,
+  .chain-item {
+    background: rgba(0, 0, 0, 0.8);
+    border-color: #ffffff;
+    backdrop-filter: none;
   }
-  
-  .chain-card.selected {
+
+  .chain-item.selected {
     background: var(--chain-color);
-    color: var(--ds-text-inverse);
+    color: #ffffff;
   }
-  
+
   .quantum-badge {
-    background: var(--ds-surface);
-    color: var(--ds-text-primary);
-    border: 1px solid var(--ds-border);
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #000000;
   }
-  
-  .chain-card::after,
+
   .quantum-badge::after {
     background: transparent;
+  }
+
+  .floating-orb {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  .chain-item:hover,
+  .chain-item.selected {
+    border-left-color: #ffffff;
   }
 }

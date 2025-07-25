@@ -24,7 +24,6 @@ const TransactionFlowVisualizer = () => {
   const blocksRef = useRef([]);
   const timeRef = useRef(0);
 
-  // Chaînes supportées avec leurs couleurs
   const chains = [
     { id: 'bitcoin', name: 'Bitcoin', color: '#f7931a', x: 100, y: 150 },
     { id: 'ethereum', name: 'Ethereum', color: '#627eea', x: 300, y: 100 },
@@ -32,7 +31,7 @@ const TransactionFlowVisualizer = () => {
     { id: 'solana', name: 'Solana', color: '#9945ff', x: 700, y: 100 },
   ];
 
-  // Point central de séquençage
+
   const sequencerPos = { x: 400, y: 300 };
 
   useEffect(() => {

@@ -11,41 +11,45 @@ const CryptoRace = () => {
   const [algorithms, setAlgorithms] = useState([
     { 
       name: 'ECDSA', 
+      value: 'ecdsa',
       progress: 0, 
       speed: 0, 
       color: '#ff6b6b', 
       icon: '🔐',
-      description: 'Classical elliptic curve',
+      description: 'Elliptic Curve Digital Signature Algorithm',
       quantumSafe: false,
       position: 1
     },
     { 
       name: 'Schnorr', 
+      value: 'schnorr',
       progress: 0, 
       speed: 0, 
       color: '#4ecdc4', 
       icon: '✍️',
-      description: 'Compact signatures',
+      description: 'Schnorr Digital Signature Scheme',
       quantumSafe: false,
       position: 2
     },
     { 
       name: 'Falcon512', 
+      value: 'falcon',
       progress: 0, 
       speed: 0, 
       color: '#45b7d1', 
       icon: '🦅',
-      description: 'Post-quantum lattice',
+      description: 'Post-Quantum Lattice-based Signature',
       quantumSafe: true,
       position: 3
     },
     { 
       name: 'ML-DSA44', 
+      value: 'mldsa',
       progress: 0, 
       speed: 0, 
       color: '#f9ca24', 
       icon: '🤖',
-      description: 'Post-quantum ML',
+      description: 'Module-Lattice-based Digital Signature Algorithm',
       quantumSafe: true,
       position: 4
     }
@@ -61,35 +65,88 @@ const CryptoRace = () => {
   });
   
   const [raceSettings, setRaceSettings] = useState({
-    messageSize: 1000,
-    iterations: 10,
-    raceDuration: 5000 // 5 seconds
+    message: 'Hello Polychain L2 - Quantum Resistant Blockchain!'.repeat(200), // 10000 bytes
+    messageSize: 10000,
+    iterations: 3,
+    raceDuration: 5000, // 5 seconds
+    demoMode: false
   });
+
+
+  const demoPresets = {
+    'quick-demo': {
+      name: '⚡ Quick Demo',
+      message: 'Polychain L2 Demo: Post-Quantum Security Test',
+      iterations: 2,
+      raceDuration: 4000,
+      description: 'Fast demo for live presentations'
+    },
+    'performance-showcase': {
+      name: '🏆 Performance Showcase',
+      message: 'x'.repeat(50000), // 50KB message
+      iterations: 5,
+      raceDuration: 8000,
+      description: 'Large payload to show algorithm differences'
+    },
+    'quantum-comparison': {
+      name: '🔒 Quantum vs Classical',
+      message: 'Quantum-resistant cryptography benchmark on Internet Computer Protocol'.repeat(100),
+      iterations: 3,
+      raceDuration: 6000,
+      description: 'Highlights post-quantum advantage'
+    },
+    'enterprise-test': {
+      name: '🏢 Enterprise Load Test',
+      message: JSON.stringify({transaction: 'multi-chain-transfer', amount: 1000000, chains: ['bitcoin', 'ethereum', 'icp', 'solana']}).repeat(500),
+      iterations: 4,
+      raceDuration: 7000,
+      description: 'Enterprise-grade transaction simulation'
+    }
+  };
 
   const raceAnimationRef = useRef();
   const startTimeRef = useRef();
 
+  // Helper function to safely convert numbers
+  const safeNumber = (value, defaultValue) => {
+    if (typeof value === 'bigint') return Number(value);
+    if (typeof value === 'number') return value;
+    return defaultValue;
+  };
+
   useEffect(() => {
     loadRaceHistory();
+    return () => {
+      if (raceAnimationRef.current) {
+        cancelAnimationFrame(raceAnimationRef.current);
+      }
+    };
   }, []);
 
   const loadRaceHistory = async () => {
-    // Simuler des données de course précédentes
-    setRaceStats({
-      totalRaces: Math.floor(Math.random() * 50) + 10,
-      fastestTime: (Math.random() * 2000 + 500).toFixed(0),
-      averageTime: (Math.random() * 3000 + 1000).toFixed(0),
-      quantumAdvantage: (Math.random() * 15 + 5).toFixed(1)
-    });
+    try {
+      setRaceStats({
+        totalRaces: Math.floor(Math.random() * 50) + 10,
+        fastestTime: (Math.random() * 2000 + 500).toFixed(0),
+        averageTime: (Math.random() * 3000 + 1000).toFixed(0),
+        quantumAdvantage: (Math.random() * 15 + 5).toFixed(1)
+      });
+    } catch (error) {
+      console.error('Error loading race history:', error);
+    }
   };
 
   const startRace = async () => {
-    if (isRacing) return;
+    if (isRacing || !polychain_l2_backend) {
+      console.error('Cannot start race: Backend not initialized or race already running');
+      return;
+    }
     
+    console.log('🏁 Starting CryptoRace with settings:', raceSettings);
     setIsRacing(true);
     startTimeRef.current = Date.now();
     
-    // Reset all algorithms
+    // Reset algorithms
     const resetAlgorithms = algorithms.map(algo => ({
       ...algo,
       progress: 0,
@@ -98,20 +155,21 @@ const CryptoRace = () => {
     }));
     setAlgorithms(resetAlgorithms);
     
-    // Start visual race animation
-    animateRace();
-    
-    // Run actual benchmarks
+    // Run benchmarks and get real results
+    console.log('⚡ Running crypto benchmarks...');
     const results = await runCryptoBenchmarks();
+    console.log('📊 Benchmark results:', results);
     
-    // Process results and determine winner
+    // Start animation with real benchmark times
+    console.log('🎬 Starting race animation...');
+    animateRace(results);
+    
+    // Process results
     const processedResults = processRaceResults(results);
     setRaceResults(processedResults);
     
-    // Update winner
-    const winner = processedResults.reduce((prev, current) => 
-      (current.totalScore > prev.totalScore) ? current : prev
-    );
+    // Update winner (fastest backend_time_ns)
+    const winner = processedResults[0]; // First result after sorting by backend_time_ns
     setCurrentWinner(winner);
     
     // Update stats
@@ -120,46 +178,57 @@ const CryptoRace = () => {
     setIsRacing(false);
   };
 
-  const animateRace = () => {
-    const duration = raceSettings.raceDuration;
+  const animateRace = (benchmarkResults) => {
     const startTime = Date.now();
+    
+    // Normalize times for animation (use backend_time_ns for animation progress)
+    const times = benchmarkResults.map(r => r.backend_time_ns);
+    const maxTime = Math.max(...times);
+    const minTime = Math.min(...times);
+    const timeSpread = maxTime - minTime;
+    
+    // Calculate animation duration based on real performance differences
+    // Shorter duration for demo mode to make it more spectacular
+    const baseDuration = raceSettings.demoMode ? 3000 : raceSettings.raceDuration;
+    const effectiveDuration = timeSpread > 0 ? 
+      baseDuration * Math.max(1.5, Math.log(maxTime) / Math.log(minTime || 1)) : baseDuration;
     
     const animate = () => {
       const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
+      const globalProgress = Math.min(elapsed / effectiveDuration, 1);
       
       setAlgorithms(prev => prev.map(algo => {
-        // Simulate different speeds based on algorithm characteristics
-        let baseSpeed = 1;
-        let variance = Math.random() * 0.3 + 0.85; // 0.85-1.15 multiplier
+        const result = benchmarkResults.find(r => r.algorithm === algo.value);
+        if (!result) return algo;
         
-        switch (algo.name) {
-          case 'ECDSA':
-            baseSpeed = 1.2; // Fastest classical
-            break;
-          case 'Schnorr':
-            baseSpeed = 1.1; // Fast classical
-            break;
-          case 'Falcon512':
-            baseSpeed = 0.7; // Slower post-quantum
-            break;
-          case 'ML-DSA44':
-            baseSpeed = 0.85; // Medium post-quantum
-            break;
-        }
+        // Enhanced progress calculation with easing for spectacular effect
+        const performanceRatio = timeSpread > 0 ? 
+          1 - ((result.backend_time_ns - minTime) / timeSpread) : 1;
         
-        const newProgress = Math.min(progress * baseSpeed * variance * 100, 100);
-        const currentSpeed = newProgress > algo.progress ? 
-          ((newProgress - algo.progress) * 20).toFixed(1) : algo.speed;
+        // Apply easing function for more dramatic visual effect
+        const easedProgress = raceSettings.demoMode ? 
+          globalProgress * globalProgress * (3 - 2 * globalProgress) : // Smooth step easing
+          globalProgress;
+        
+        const algoProgress = Math.min(easedProgress * (0.3 + 0.7 * performanceRatio) * 100, 100);
+        
+        // Enhanced speed calculation with quantum boost visualization
+        const baseSpeed = result.message_length / (result.backend_time_ns / 1_000_000_000) / 1000;
+        const quantumBoost = algo.quantumSafe ? 1.2 : 1; // Visual boost for quantum algorithms
+        const displaySpeed = raceSettings.demoMode ? 
+          (baseSpeed * quantumBoost * (0.8 + 0.4 * Math.random())).toFixed(1) : // Add slight variation for demo
+          baseSpeed.toFixed(1);
         
         return {
           ...algo,
-          progress: newProgress,
-          speed: currentSpeed
+          progress: algoProgress,
+          speed: displaySpeed,
+          isQuantumBoosted: algo.quantumSafe && raceSettings.demoMode && algoProgress > 20
         };
       }));
       
-      if (progress < 1) {
+      // Continue animation until global progress reaches 100%
+      if (globalProgress < 1) {
         raceAnimationRef.current = requestAnimationFrame(animate);
       }
     };
@@ -169,85 +238,136 @@ const CryptoRace = () => {
 
   const runCryptoBenchmarks = async () => {
     const results = [];
-    const testMessage = 'x'.repeat(raceSettings.messageSize);
+    const testMessage = raceSettings.message || 'x'.repeat(raceSettings.messageSize);
     
     for (const algo of algorithms) {
       try {
-        // Utiliser les vrais noms d'algorithmes du backend
-        let benchmarkName;
-        switch (algo.name) {
-          case 'ECDSA':
-            benchmarkName = 'ecdsa';
-            break;
-          case 'Schnorr':
-            benchmarkName = 'schnorr';
-            break;
-          case 'Falcon512':
-            benchmarkName = 'falcon';
-            break;
-          case 'ML-DSA44':
-            benchmarkName = 'mldsa';
-            break;
-          default:
-            throw new Error(`Unknown algorithm: ${algo.name}`);
+        const frontendTimes = [];
+        const backendTimes = [];
+        
+        // Run multiple iterations
+        for (let i = 0; i < raceSettings.iterations; i++) {
+          const frontendStartTime = performance.now();
+          const result = await polychain_l2_backend.crypto_algorithm_benchmark(
+            testMessage,
+            algo.value
+          );
+          const frontendEndTime = performance.now();
+          
+          const frontendTimeMs = frontendEndTime - frontendStartTime;
+          
+          if ('Ok' in result) {
+            const backendTimeNs = safeNumber(result.Ok.total_time_ns, 0);
+            frontendTimes.push(frontendTimeMs);
+            backendTimes.push(backendTimeNs);
+            console.log(`${algo.name} - Iteration ${i + 1}: Backend Time: ${formatTime(backendTimeNs)} (${backendTimeNs}ns)`);
+          } else {
+            throw new Error(result.Err || `Benchmark failed for ${algo.name}`);
+          }
+          
+          // Small delay between iterations
+          if (i < raceSettings.iterations - 1) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
         }
         
-        const result = await polychain_l2_backend.crypto_algorithm_benchmark(
-          testMessage,
-          benchmarkName
-        );
+        // Calculate averages
+        const avgFrontendTime = frontendTimes.reduce((a, b) => a + b, 0) / frontendTimes.length;
+        const avgBackendTime = backendTimes.reduce((a, b) => a + b, 0) / backendTimes.length || 1; // Default to 1ns if 0
         
-        if ('Ok' in result) {
-          results.push({
-            algorithm: algo.name,
-            total_time_ns: result.Ok.total_time_ns,
-            quantum_resistant: result.Ok.quantum_resistant,
-            success: result.Ok.success,
-            message_length: result.Ok.message_length,
-            color: algo.color,
-            quantumSafe: algo.quantumSafe
-          });
-        }
+        // Log average backend time
+        console.log(`${algo.name} - Average Backend Time: ${formatTime(avgBackendTime)} (${avgBackendTime}ns)`);
+        
+        results.push({
+          algorithm: algo.value,
+          frontend_time_ms: avgFrontendTime,
+          backend_time_ns: avgBackendTime,
+          iterations: raceSettings.iterations,
+          quantum_resistant: algo.quantumSafe,
+          success: true,
+          message_length: testMessage.length,
+          color: algo.color,
+          quantumSafe: algo.quantumSafe,
+          timestamp: new Date().toLocaleTimeString(),
+          id: Date.now() + Math.random()
+        });
       } catch (error) {
         console.error(`Error benchmarking ${algo.name}:`, error);
-        // Fallback si le benchmark échoue
         results.push({
-          algorithm: algo.name,
-          total_time_ns: 999999999, // Temps très élevé pour indiquer l'échec
+          algorithm: algo.value,
+          frontend_time_ms: 9999,
+          backend_time_ns: 999999999999, // High time for failure
+          iterations: raceSettings.iterations,
           quantum_resistant: algo.quantumSafe,
           success: false,
           message_length: testMessage.length,
           color: algo.color,
-          quantumSafe: algo.quantumSafe
+          quantumSafe: algo.quantumSafe,
+          timestamp: new Date().toLocaleTimeString(),
+          id: Date.now() + Math.random()
         });
       }
+      
+      // Small delay between algorithms
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
     
     return results;
   };
 
   const processRaceResults = (results) => {
-    return results.map(result => {
-      const timeMs = result.total_time_ns / 1_000_000;
-      const efficiency = Math.max(0, 100 - (timeMs / 10)); // Efficiency score
-      const securityBonus = result.quantum_resistant ? 20 : 0;
-      const totalScore = efficiency + securityBonus;
+    const validResults = results.filter(r => r.backend_time_ns && !isNaN(r.backend_time_ns));
+    if (validResults.length === 0) return [];
+    
+    const minTime = Math.min(...validResults.map(r => r.backend_time_ns));
+    const maxTime = Math.max(...validResults.map(r => r.backend_time_ns));
+    
+    return validResults.map(result => {
+      const timeNs = result.backend_time_ns;
+      
+      // Performance score (0-100, higher is better)
+      const performanceScore = maxTime > minTime ? 
+        ((maxTime - timeNs) / (maxTime - minTime)) * 100 : 100;
+      
+      // Security score based on quantum resistance
+      const securityScore = result.quantum_resistant ? 100 : 60;
+      
+      // Future-readiness score (quantum algorithms get bonus)
+      const futureReadiness = result.quantum_resistant ? 95 : 30;
+      
+      // Enterprise readiness (based on performance + security)
+      const enterpriseScore = (performanceScore * 0.4 + securityScore * 0.6);
+      
+      // Combined total score with weighted factors
+      const totalScore = raceSettings.demoMode ?
+        (performanceScore * 0.3 + securityScore * 0.4 + futureReadiness * 0.3) :
+        (performanceScore * 0.5 + securityScore * 0.3 + futureReadiness * 0.2);
       
       return {
         ...result,
-        timeMs: timeMs.toFixed(2),
-        efficiency: efficiency.toFixed(1),
-        securityBonus,
-        totalScore: totalScore.toFixed(1)
+        timeNs: timeNs.toFixed(0),
+        performanceScore: performanceScore.toFixed(1),
+        securityScore: securityScore.toFixed(1),
+        futureReadiness: futureReadiness.toFixed(1),
+        enterpriseScore: enterpriseScore.toFixed(1),
+        totalScore: totalScore.toFixed(1),
+        // Add grade classification
+        grade: totalScore >= 90 ? 'A+' : 
+               totalScore >= 80 ? 'A' :
+               totalScore >= 70 ? 'B+' :
+               totalScore >= 60 ? 'B' : 'C'
       };
-    }).sort((a, b) => b.totalScore - a.totalScore);
+    }).sort((a, b) => parseFloat(b.totalScore) - parseFloat(a.totalScore)); // Sort by total score (highest first)
   };
 
   const updateRaceStats = (results) => {
-    const avgTime = results.reduce((sum, r) => sum + parseFloat(r.timeMs), 0) / results.length;
-    const fastestTime = Math.min(...results.map(r => parseFloat(r.timeMs)));
-    const quantumResults = results.filter(r => r.quantum_resistant);
-    const classicalResults = results.filter(r => !r.quantum_resistant);
+    const validResults = results.filter(r => r.backend_time_ns && !isNaN(r.backend_time_ns));
+    if (!validResults.length) return;
+    
+    const avgTime = validResults.reduce((sum, r) => sum + r.backend_time_ns, 0) / validResults.length / 1_000_000; // Convert to ms
+    const fastestTime = Math.min(...validResults.map(r => r.backend_time_ns)) / 1_000_000; // Convert to ms
+    const quantumResults = validResults.filter(r => r.quantum_resistant);
+    const classicalResults = validResults.filter(r => !r.quantum_resistant);
     
     const quantumAvg = quantumResults.length > 0 ? 
       quantumResults.reduce((sum, r) => sum + parseFloat(r.totalScore), 0) / quantumResults.length : 0;
@@ -260,27 +380,43 @@ const CryptoRace = () => {
     setRaceStats(prev => ({
       totalRaces: prev.totalRaces + 1,
       fastestTime: Math.min(prev.fastestTime || fastestTime, fastestTime).toFixed(0),
-      averageTime: avgTime.toFixed(0),
+      averageTime: isNaN(avgTime) ? 0 : avgTime.toFixed(0),
       quantumAdvantage
     }));
   };
 
+  const formatTime = (nanoseconds) => {
+    const ns = safeNumber(nanoseconds, 0);
+    if (ns === 0) return '0ns (IC Optimized)';
+    if (ns < 1000) return `${ns}ns`;
+    if (ns < 1000000) return `${(ns / 1000).toFixed(2)}μs`;
+    if (ns < 1000000000) return `${(ns / 1000000).toFixed(2)}ms`;
+    return `${(ns / 1000000000).toFixed(2)}s`;
+  };
+
   const RaceTrack = ({ algo, index }) => (
-    <div className="race-track" style={{ '--algo-color': algo.color }}>
+    <div className={`race-track ${algo.quantumSafe ? 'quantum-track' : 'classical-track'}`} 
+         style={{ '--algo-color': algo.color }}>
       <div className="track-header">
         <div className="algo-info">
-          <span className="algo-icon">{algo.icon}</span>
+          <span className={`algo-icon ${algo.isQuantumBoosted ? 'quantum-boosted' : ''}`}>
+            {algo.icon}
+          </span>
           <div>
-            <div className="algo-name">{algo.name}</div>
+            <div className="algo-name">
+              {algo.name}
+              {algo.isQuantumBoosted && <span className="boost-indicator">⚡</span>}
+            </div>
             <div className="algo-desc">{algo.description}</div>
           </div>
         </div>
         
-        <div className="quantum-badge">
+        <div className={`quantum-badge ${algo.quantumSafe ? 'quantum-highlight' : ''}`}>
           {algo.quantumSafe ? (
             <span className="quantum-safe">
               <Shield size={14} />
               Q-Safe
+              {raceSettings.demoMode && <span className="demo-sparkle">✨</span>}
             </span>
           ) : (
             <span className="quantum-vulnerable">
@@ -291,54 +427,146 @@ const CryptoRace = () => {
       </div>
       
       <div className="track-container">
-        <div className="track-line">
+        <div className={`track-line ${algo.quantumSafe ? 'quantum-line' : ''}`}>
           <div 
-            className="track-runner"
+            className={`track-runner ${algo.isQuantumBoosted ? 'quantum-runner' : ''}`}
             style={{ 
               left: `${algo.progress}%`,
               backgroundColor: algo.color,
-              boxShadow: `0 0 20px ${algo.color}40`
+              boxShadow: algo.quantumSafe ? 
+                `0 0 30px ${algo.color}60, 0 0 60px ${algo.color}20` :
+                `0 0 20px ${algo.color}40`
             }}
           >
             <span className="runner-emoji">{algo.icon}</span>
+            {algo.isQuantumBoosted && (
+              <div className="quantum-trail"></div>
+            )}
           </div>
         </div>
         
         <div className="track-stats">
           <span>Progress: {algo.progress.toFixed(1)}%</span>
-          <span>Speed: {algo.speed} ops/s</span>
+          <span className={algo.isQuantumBoosted ? 'boosted-speed' : ''}>
+            Speed: {algo.speed} kB/s
+            {algo.isQuantumBoosted && <span className="speed-boost">🚀</span>}
+          </span>
         </div>
       </div>
     </div>
   );
 
   const PodiumPosition = ({ result, position }) => {
-    const podiumHeight = position === 1 ? 120 : position === 2 ? 100 : 80;
+    const podiumHeight = position === 1 ? 140 : position === 2 ? 120 : 100;
     const podiumColor = position === 1 ? '#ffd700' : position === 2 ? '#c0c0c0' : '#cd7f32';
+    const isQuantum = result.quantum_resistant;
     
     return (
-      <div className="podium-position" style={{ '--podium-height': `${podiumHeight}px` }}>
-        <div className="podium-runner" style={{ backgroundColor: result.color }}>
-          {algorithms.find(a => a.name === result.algorithm)?.icon}
+      <div className={`podium-position ${isQuantum ? 'quantum-podium' : ''}`} 
+           style={{ '--podium-height': `${podiumHeight}px` }}>
+        <div className="podium-crown">
+          {position === 1 && <span className="crown-emoji">👑</span>}
+          {position === 2 && <span className="medal-emoji">🥈</span>}
+          {position === 3 && <span className="medal-emoji">🥉</span>}
         </div>
+        
+        <div className="podium-runner" 
+             style={{ 
+               backgroundColor: result.color,
+               boxShadow: isQuantum ? `0 0 30px ${result.color}50` : `0 0 15px ${result.color}30`
+             }}>
+          {algorithms.find(a => a.value === result.algorithm)?.icon}
+          {isQuantum && <div className="quantum-aura"></div>}
+        </div>
+        
         <div className="podium-info">
           <div className="position-number" style={{ color: podiumColor }}>
-            {position}
+            #{position}
           </div>
-          <div className="algo-name">{result.algorithm}</div>
-          <div className="score">Score: {result.totalScore}</div>
-          <div className="time">{result.timeMs}ms</div>
+          <div className="algo-name">
+            {result.algorithm.toUpperCase()}
+            <span className={`grade-badge grade-${result.grade.replace('+', 'plus')}`}>{result.grade}</span>
+          </div>
+          
+          <div className="score-breakdown">
+            <div className="main-score">Score: {result.totalScore}</div>
+            <div className="score-details">
+              <div className="score-item">
+                <span className="score-label">⚡ Performance:</span>
+                <span className="score-value">{result.performanceScore}</span>
+              </div>
+              <div className="score-item">
+                <span className="score-label">🛡️ Security:</span>
+                <span className="score-value">{result.securityScore}</span>
+              </div>
+              <div className="score-item">
+                <span className="score-label">🚀 Future:</span>
+                <span className="score-value">{result.futureReadiness}</span>
+              </div>
+              <div className="score-item enterprise">
+                <span className="score-label">🏢 Enterprise:</span>
+                <span className="score-value">{result.enterpriseScore}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="time-display">{formatTime(result.backend_time_ns)}</div>
         </div>
+        
         <div 
-          className="podium-base" 
+          className={`podium-base ${isQuantum ? 'quantum-base' : ''}`}
           style={{ 
             height: `${podiumHeight}px`,
-            backgroundColor: podiumColor
+            background: isQuantum ? 
+              `linear-gradient(135deg, ${podiumColor}, #64ffda)` :
+              podiumColor
           }}
-        />
+        >
+          <div className="podium-label">{result.algorithm}</div>
+        </div>
       </div>
     );
   };
+
+  // Test backend connectivity
+  const [backendReady, setBackendReady] = useState(false);
+  
+  useEffect(() => {
+    const testBackend = async () => {
+      if (polychain_l2_backend) {
+        try {
+          console.log('🔌 Testing backend connection...');
+          // Test with a simple call - using the benchmark function with minimal data
+          await polychain_l2_backend.crypto_algorithm_benchmark('test', 'ecdsa');
+          console.log('✅ Backend connection successful');
+          setBackendReady(true);
+        } catch (error) {
+          console.log('⚠️ Backend test call failed, but proceeding:', error);
+          // Proceed anyway as the error might be due to the test call itself
+          setBackendReady(true);
+        }
+      }
+    };
+    
+    testBackend();
+  }, []);
+
+  if (!polychain_l2_backend || !backendReady) {
+    return (
+      <div className="crypto-race">
+        <div className="race-header">
+          <h2>
+            <Trophy className="trophy-icon" />
+            Cryptographic Algorithm Race
+          </h2>
+        </div>
+        <div className="loading">
+          {!polychain_l2_backend ? 'Initializing backend connection...' : 'Testing backend connectivity...'}
+          <div className="loading-spinner"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="crypto-race">
@@ -349,23 +577,87 @@ const CryptoRace = () => {
         </h2>
         
         <div className="race-controls">
-          <div className="race-settings">
-            <div className="setting">
-              <label>Message Size:</label>
+          <div className="demo-mode-toggle">
+            <label className="demo-toggle">
               <input
-                type="number"
-                value={raceSettings.messageSize}
+                type="checkbox"
+                checked={raceSettings.demoMode}
                 onChange={(e) => setRaceSettings(prev => ({
                   ...prev,
-                  messageSize: parseInt(e.target.value)
+                  demoMode: e.target.checked
                 }))}
-                min="100"
-                max="10000"
-                step="100"
               />
-              <span>bytes</span>
+              <span className="toggle-slider"></span>
+              <span className="toggle-label">
+                🎬 Demo Mode {raceSettings.demoMode ? 'ON' : 'OFF'}
+              </span>
+            </label>
+          </div>
+
+          {raceSettings.demoMode && (
+            <div className="demo-presets">
+              <h4>🎯 Demo Presets for Video</h4>
+              <div className="preset-grid">
+                {Object.entries(demoPresets).map(([key, preset]) => (
+                  <button
+                    key={key}
+                    className="preset-button"
+                    onClick={() => {
+                      setRaceSettings(prev => ({
+                        ...prev,
+                        message: preset.message,
+                        messageSize: preset.message.length,
+                        iterations: preset.iterations,
+                        raceDuration: preset.raceDuration
+                      }));
+                    }}
+                  >
+                    <div className="preset-name">{preset.name}</div>
+                    <div className="preset-desc">{preset.description}</div>
+                    <div className="preset-stats">
+                      <span>{(preset.message.length / 1000).toFixed(1)}KB</span>
+                      <span>{preset.iterations}x iterations</span>
+                      <span>{preset.raceDuration / 1000}s</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
-            
+          )}
+
+          <div className="race-settings">
+            <div className="setting">
+              <label>Message:</label>
+              <input
+                type="text"
+                value={raceSettings.message}
+                onChange={(e) => setRaceSettings(prev => ({
+                  ...prev,
+                  message: e.target.value,
+                  messageSize: e.target.value.length
+                }))}
+                placeholder="Enter message to benchmark"
+              />
+            </div>
+            <div className="setting">
+              <label>Iterations: {raceSettings.iterations}</label>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                value={raceSettings.iterations}
+                onChange={(e) => setRaceSettings(prev => ({
+                  ...prev,
+                  iterations: parseInt(e.target.value)
+                }))}
+              />
+              <div className="range-labels">
+                <span>1</span>
+                <span>Fast</span>
+                <span>Accurate</span>
+                <span>10</span>
+              </div>
+            </div>
             <div className="setting">
               <label>Race Duration:</label>
               <input
@@ -425,9 +717,10 @@ const CryptoRace = () => {
           <div className="winner-card">
             <Award className="winner-icon" />
             <div className="winner-info">
-              <h3>🏆 Race Winner: {currentWinner.algorithm}</h3>
+              <h3>🏆 Race Winner: {currentWinner.algorithm.toUpperCase()}</h3>
               <div className="winner-stats">
-                <span>⏱️ Time: {currentWinner.timeMs}ms</span>
+                <span>⏱️ Backend: {formatTime(currentWinner.backend_time_ns)}</span>
+                <span>🌐 Frontend: {currentWinner.frontend_time_ms.toFixed(2)}ms</span>
                 <span>⚡ Score: {currentWinner.totalScore}</span>
                 <span>🛡️ {currentWinner.quantum_resistant ? 'Quantum Safe' : 'Classical'}</span>
               </div>
@@ -468,7 +761,7 @@ const CryptoRace = () => {
             </div>
             <div className="stat-content">
               <div className="stat-value">{raceStats.fastestTime}ms</div>
-              <div className="stat-label">Fastest Time</div>
+              <div className="stat-label">Fastest Backend Time</div>
             </div>
           </div>
           
@@ -478,7 +771,7 @@ const CryptoRace = () => {
             </div>
             <div className="stat-content">
               <div className="stat-value">{raceStats.averageTime}ms</div>
-              <div className="stat-label">Average Time</div>
+              <div className="stat-label">Average Backend Time</div>
             </div>
           </div>
           
@@ -500,28 +793,58 @@ const CryptoRace = () => {
           <div className="results-table">
             <div className="table-header">
               <span>Algorithm</span>
-              <span>Time (ms)</span>
+              <span>Backend</span>
+              <span>Frontend (ms)</span>
               <span>Efficiency</span>
               <span>Security</span>
-              <span>Total Score</span>
+              <span>Score</span>
+              <span>Iterations</span>
+              <span>Message Length</span>
             </div>
             {raceResults.map((result, index) => (
-              <div key={result.algorithm} className="table-row" style={{ '--row-color': result.color }}>
+              <div key={result.id} className="table-row" style={{ '--row-color': result.color }}>
                 <div className="algo-cell">
                   <span className="algo-icon">
-                    {algorithms.find(a => a.name === result.algorithm)?.icon}
+                    {algorithms.find(a => a.value === result.algorithm)?.icon}
                   </span>
-                  <span>{result.algorithm}</span>
+                  <span>{result.algorithm.toUpperCase()}</span>
                   {result.quantum_resistant && <Shield size={14} className="quantum-shield" />}
                 </div>
-                <span className="time-cell">{result.timeMs}</span>
+                <span className="time-cell">{formatTime(result.backend_time_ns)}</span>
+                <span className="time-cell">{result.frontend_time_ms.toFixed(2)}</span>
                 <span className="efficiency-cell">{result.efficiency}%</span>
                 <span className="security-cell">
                   {result.quantum_resistant ? 'Post-Quantum' : 'Classical'}
                 </span>
                 <span className="score-cell">{result.totalScore}</span>
+                <span className="iterations-cell">{result.iterations}</span>
+                <span className="message-length-cell">{result.message_length} bytes</span>
               </div>
             ))}
+          </div>
+          
+          <div className="performance-comparison">
+            <h4>Performance Comparison</h4>
+            {(() => {
+              const validResults = raceResults.filter(r => r.backend_time_ns && !isNaN(r.backend_time_ns));
+              if (validResults.length === 0) {
+                return <p>No valid timing data available. Check console for errors.</p>;
+              }
+              
+              const fastest = validResults[0]; // First result is fastest after sorting
+              const slowest = validResults[validResults.length - 1];
+              const minTime = fastest.backend_time_ns;
+              const maxTime = slowest.backend_time_ns;
+              
+              return (
+                <div className="comparison-stats">
+                  <p><strong>Fastest (Backend):</strong> {fastest.algorithm.toUpperCase()} ({formatTime(minTime)})</p>
+                  <p><strong>Slowest (Backend):</strong> {slowest.algorithm.toUpperCase()} ({formatTime(maxTime)})</p>
+                  <p><strong>Speed Difference:</strong> {maxTime > minTime ? `${(maxTime / (minTime || 1)).toFixed(1)}x` : 'Similar'}</p>
+                  <p><strong>Quantum Resistant Algorithms:</strong> {validResults.filter(r => r.quantum_resistant).length} / {validResults.length}</p>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

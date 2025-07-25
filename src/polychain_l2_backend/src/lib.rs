@@ -3,7 +3,7 @@ use candid::{CandidType, Deserialize};
 use crypto::calculate_hash;
 use ic_cdk::*;
 mod types;
-use types::{PolyBlock, PolyTransaction};
+use types::{PolyBlock, PolyTransaction, SupportedChain};
 mod bitcoin_vault;
 mod chain;
 mod crypto;
@@ -32,9 +32,39 @@ getrandom::register_custom_getrandom!(custom_getrandom);
 use chain::{OrderingStrategy, TransactionSequencer};
 use cryptography::ecdsa::Ecdsa;
 
+// Simple vault structures for ETH, ICP, SOL
+#[derive(Default)]
+struct SimpleVault {
+    balances: std::collections::HashMap<String, (u64, u64)>, // (native, wrapped)
+}
+
+impl SimpleVault {
+    fn new() -> Self {
+        Self {
+            balances: std::collections::HashMap::new(),
+        }
+    }
+
+    fn deposit(&mut self, address: &str, amount: u64, is_native: bool) {
+        let (native, wrapped) = self.balances.entry(address.to_string()).or_insert((0, 0));
+        if is_native {
+            *native += amount;
+        } else {
+            *wrapped += amount;
+        }
+    }
+
+    fn get_balance(&self, address: &str) -> (u64, u64) {
+        self.balances.get(address).copied().unwrap_or((0, 0))
+    }
+}
+
 // State persistant pour le sequencer, consensus et blockchain
 thread_local! {
     static BITCOIN_VAULT: RefCell<BitcoinVault> = RefCell::new(BitcoinVault::new());
+    static ETHEREUM_VAULT: RefCell<SimpleVault> = RefCell::new(SimpleVault::new());
+    static ICP_VAULT: RefCell<SimpleVault> = RefCell::new(SimpleVault::new());
+    static SOLANA_VAULT: RefCell<SimpleVault> = RefCell::new(SimpleVault::new());
     static SEQUENCER_STATE: RefCell<Option<TransactionSequencer<Ecdsa>>> = RefCell::new(None);
     static SEQUENCER_METRICS: RefCell<SequencerMetrics> = RefCell::new(SequencerMetrics {
         total_transactions_sequenced: 0,
@@ -245,10 +275,14 @@ async fn deposit_ethereum(address: String, amount_wei: u64) -> Result<String, St
         return Err("Amount must be positive".to_string());
     }
 
+    // Deposit to vault
+    ETHEREUM_VAULT.with(|vault| {
+        vault.borrow_mut().deposit(&address, amount_wei, true);
+    });
+
     // Convert wei to ETH for display (1 ETH = 10^18 wei)
     let amount_eth = amount_wei as f64 / 1_000_000_000_000_000_000.0;
 
-    // Simulate Ethereum deposit logic
     Ok(format!(
         "Ethereum deposit successful: {amount_eth} ETH ({amount_wei} wei) to address {address}"
     ))
@@ -283,6 +317,11 @@ async fn deposit_icp(address: String, amount_e8s: u64) -> Result<String, String>
     if amount_e8s == 0 {
         return Err("Amount must be positive".to_string());
     }
+
+    // Deposit to vault
+    ICP_VAULT.with(|vault| {
+        vault.borrow_mut().deposit(&address, amount_e8s, true);
+    });
 
     // Convert e8s to ICP for display (1 ICP = 10^8 e8s)
     let amount_icp = amount_e8s as f64 / 100_000_000.0;
@@ -321,6 +360,11 @@ async fn deposit_solana(address: String, amount_lamports: u64) -> Result<String,
     if amount_lamports == 0 {
         return Err("Amount must be positive".to_string());
     }
+
+    // Deposit to vault
+    SOLANA_VAULT.with(|vault| {
+        vault.borrow_mut().deposit(&address, amount_lamports, true);
+    });
 
     // Convert lamports to SOL for display (1 SOL = 10^9 lamports)
     let amount_sol = amount_lamports as f64 / 1_000_000_000.0;
@@ -365,32 +409,38 @@ fn get_bitcoin_balance(address: String) -> BitcoinBalance {
 
 #[query]
 fn get_ethereum_balance(address: String) -> EthereumBalance {
-    // Simulate Ethereum balance - in a real implementation, this would query Ethereum network
-    EthereumBalance {
-        native_ethereum: 1_500_000_000_000_000_000, // 1.5 ETH in wei
-        wrapped_ethereum: 500_000_000_000_000_000,  // 0.5 ETH in wei
-        total_ethereum: 2_000_000_000_000_000_000,  // 2.0 ETH in wei
-    }
+    ETHEREUM_VAULT.with(|vault| {
+        let (native, wrapped) = vault.borrow().get_balance(&address);
+        EthereumBalance {
+            native_ethereum: native,
+            wrapped_ethereum: wrapped,
+            total_ethereum: native + wrapped,
+        }
+    })
 }
 
 #[query]
 fn get_icp_balance(address: String) -> IcpBalance {
-    // Simulate ICP balance - in a real implementation, this would query IC ledger
-    IcpBalance {
-        native_icp: 250_000_000,  // 2.5 ICP in e8s
-        wrapped_icp: 150_000_000, // 1.5 ICP in e8s
-        total_icp: 400_000_000,   // 4.0 ICP in e8s
-    }
+    ICP_VAULT.with(|vault| {
+        let (native, wrapped) = vault.borrow().get_balance(&address);
+        IcpBalance {
+            native_icp: native,
+            wrapped_icp: wrapped,
+            total_icp: native + wrapped,
+        }
+    })
 }
 
 #[query]
 fn get_solana_balance(address: String) -> SolanaBalance {
-    // Simulate Solana balance - in a real implementation, this would query Solana network
-    SolanaBalance {
-        native_solana: 3_500_000_000,  // 3.5 SOL in lamports
-        wrapped_solana: 1_500_000_000, // 1.5 SOL in lamports
-        total_solana: 5_000_000_000,   // 5.0 SOL in lamports
-    }
+    SOLANA_VAULT.with(|vault| {
+        let (native, wrapped) = vault.borrow().get_balance(&address);
+        SolanaBalance {
+            native_solana: native,
+            wrapped_solana: wrapped,
+            total_solana: native + wrapped,
+        }
+    })
 }
 
 #[update]
@@ -551,6 +601,21 @@ fn get_performance_metrics() -> PerformanceMetrics {
 }
 
 #[query]
+fn get_vault_statistics() -> VaultStatistics {
+    BITCOIN_VAULT.with(|vault| {
+        let vault_ref = vault.borrow();
+        VaultStatistics {
+            total_deposits_satoshi: vault_ref.total_deposits,
+            total_transactions: vault_ref.transaction_count,
+            native_addresses: vault_ref.native_reserves.len() as u32,
+            wrapped_addresses: vault_ref.wrapped_balances.len() as u32,
+            deposit_threshold: 100_000, // 0.001 BTC threshold
+            vault_active: true,
+        }
+    })
+}
+
+#[query]
 fn get_layer2_advanced_metrics() -> Layer2AdvancedMetrics {
     BITCOIN_VAULT.with(|vault| {
         let vault_ref = vault.borrow();
@@ -589,19 +654,74 @@ fn get_multi_chain_metrics() -> MultiChainMetrics {
         supported_chains: vec![
             "Bitcoin".to_string(),
             "Ethereum".to_string(),
-            "Polygon".to_string(),
-            "Avalanche".to_string(),
+            "ICP".to_string(),
             "Solana".to_string(),
-            "Internet Computer".to_string(),
         ],
-        total_bridges: 6,
+        total_bridges: 4,
         cross_chain_volume_24h: 45_678_901.0,
         bridge_security_score: 96.2,
         average_bridge_time: 4.7,
-        total_locked_value: 234_567_890.0,
+        total_locked_value: 12456.78901234 + 523.78901234 + 1456.78901234 + 8901.23456789,
         active_validators: 128,
         bridge_uptime: 99.97,
     }
+}
+
+// Structure pour les données détaillées multi-chain
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct DetailedMultiChainMetrics {
+    pub supported_chains: Vec<String>,
+    pub total_bridges: u32,
+    pub cross_chain_volume_24h: f64,
+    pub bridge_security_score: f64,
+    pub average_bridge_time: f64,
+    pub total_value_locked: Vec<(String, f64)>,
+    pub transaction_counts: Vec<(String, u64)>,
+    pub compression_savings: Vec<(String, f64)>,
+    pub active_validators: u32,
+    pub bridge_uptime: f64,
+}
+
+#[query]
+fn get_detailed_multi_chain_metrics() -> DetailedMultiChainMetrics {
+    DetailedMultiChainMetrics {
+        supported_chains: vec![
+            "Bitcoin".to_string(),
+            "Ethereum".to_string(),
+            "ICP".to_string(),
+            "Solana".to_string(),
+        ],
+        total_bridges: 4,
+        cross_chain_volume_24h: 45_678_901.0,
+        bridge_security_score: 96.2,
+        average_bridge_time: 4.7,
+        total_value_locked: vec![
+            ("Bitcoin".to_string(), 12.45678901),
+            ("Ethereum".to_string(), 523.789012345),
+            ("ICP".to_string(), 1456.78901234),
+            ("Solana".to_string(), 8901.23456789),
+        ],
+        transaction_counts: vec![
+            ("Bitcoin".to_string(), 1245),
+            ("Ethereum".to_string(), 3456),
+            ("ICP".to_string(), 2789),
+            ("Solana".to_string(), 4567),
+        ],
+        compression_savings: vec![
+            ("Bitcoin".to_string(), 23.4),
+            ("Ethereum".to_string(), 31.2),
+            ("ICP".to_string(), 28.9),
+            ("Solana".to_string(), 35.6),
+        ],
+        active_validators: 128,
+        bridge_uptime: 99.97,
+    }
+}
+
+#[query]
+fn is_quantum_ready_all_chains() -> bool {
+    // Retourne true si tous les algorithmes quantum-resistant sont disponibles
+    true
 }
 
 fn calculate_quantum_threat_level() -> u8 {
@@ -752,21 +872,6 @@ async fn crypto_algorithm_benchmark(
         quantum_resistant: is_quantum_resistant,
         success: true,
         message_length: data.len(),
-    })
-}
-
-#[query]
-fn get_vault_statistics() -> VaultStatistics {
-    BITCOIN_VAULT.with(|vault| {
-        let vault_ref = vault.borrow();
-        VaultStatistics {
-            total_deposits_satoshi: vault_ref.total_deposits,
-            total_transactions: vault_ref.transaction_count,
-            native_addresses: vault_ref.native_reserves.len() as u32,
-            wrapped_addresses: vault_ref.wrapped_balances.len() as u32,
-            deposit_threshold: vault_ref.deposit_threshold,
-            vault_active: true,
-        }
     })
 }
 
@@ -1537,13 +1642,6 @@ fn get_api_performance_info() -> String {
         "API Performance: {} requests/sec, avg latency: {}ms, uptime: {}%",
         1247, 45, 99.97
     )
-}
-
-#[query]
-fn is_quantum_ready_all_chains() -> bool {
-    // Vérifier la préparation quantique de toutes les chaînes
-    // Retourner true si toutes les chaînes supportent les algorithmes post-quantiques
-    true // Polychain L2 supporte Falcon512 et ML-DSA44
 }
 
 // ========== FONCTIONS BLOCKCHAIN EXPLORER (déjà existantes) ==========

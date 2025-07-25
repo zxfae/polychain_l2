@@ -14,7 +14,9 @@ const RealtimeDashboard = () => {
     securityScore: 0,
     totalTransactions: 0,
     bridgeActivity: 0,
-    compressionRatio: 0
+    compressionRatio: 0,
+    cpuUsage: 0,
+    latency: 0
   });
   
   const [history, setHistory] = useState({
@@ -88,21 +90,28 @@ const RealtimeDashboard = () => {
   const startRealtimeUpdates = async () => {
     const fetchMetrics = async () => {
       try {
-        const [performanceData, advancedData, sequencerData] = await Promise.all([
+        const [performanceData, advancedData, sequencerData, compressionData, apiInfo] = await Promise.all([
           polychain_l2_backend.get_performance_metrics(),
           polychain_l2_backend.get_layer2_advanced_metrics(),
-          polychain_l2_backend.get_sequencer_metrics()
+          polychain_l2_backend.get_sequencer_metrics(),
+          polychain_l2_backend.get_compression_performance_metrics(),
+          polychain_l2_backend.get_api_performance_info()
         ]);
 
-        // Utiliser les vraies données du backend avec une petite variation pour l'animation
+        // Extraire latency depuis api_info (format: "latency: XXms")
+        const latencyMatch = apiInfo.match(/avg latency: (\d+)ms/);
+        const latencyValue = latencyMatch ? parseInt(latencyMatch[1]) : 45;
+        
+        // Utiliser les vraies données du backend
         const newMetrics = {
-          tps: performanceData.transactions_per_second + Math.random() * 20 - 10,
-          quantumThreat: advancedData.quantum_threat_level + Math.random() * 5 - 2.5,
-          securityScore: advancedData.security_score + Math.random() * 2 - 1,
+          tps: parseInt(performanceData.transactions_per_second),
+          quantumThreat: advancedData.quantum_threat_level,
+          securityScore: advancedData.security_score,
           totalTransactions: parseInt(sequencerData.total_transactions_sequenced),
-          bridgeActivity: (sequencerData.current_pending_count * 10) + Math.random() * 15,
-          compressionRatio: advancedData.performance_impact_quantum ? 
-            (100 - advancedData.performance_impact_quantum) + Math.random() * 5 : 70
+          bridgeActivity: sequencerData.current_pending_count * 10,
+          compressionRatio: compressionData.compression_ratio * 100,
+          cpuUsage: Math.min(95, compressionData.compression_speed_mbps / 2), // Approximation basée sur performance
+          latency: latencyValue
         };
 
         setMetrics(prev => ({
@@ -111,7 +120,9 @@ const RealtimeDashboard = () => {
           securityScore: Math.max(0, Math.min(100, newMetrics.securityScore)),
           totalTransactions: newMetrics.totalTransactions,
           bridgeActivity: Math.max(0, newMetrics.bridgeActivity),
-          compressionRatio: Math.max(0, Math.min(100, newMetrics.compressionRatio))
+          compressionRatio: Math.max(0, Math.min(100, newMetrics.compressionRatio)),
+          cpuUsage: Math.max(0, Math.min(100, newMetrics.cpuUsage)),
+          latency: Math.max(0, newMetrics.latency)
         }));
 
         setHistory(prev => ({
@@ -288,7 +299,7 @@ const RealtimeDashboard = () => {
           unit="TPS"
           icon={Zap}
           color="#00ff88"
-          trend={Math.random() * 20 - 10}
+          trend={history.tps.length > 1 ? ((metrics.tps - history.tps[history.tps.length-2]) / history.tps[history.tps.length-2] * 100) : 0}
           sparkline={history.tps}
         />
         
@@ -298,7 +309,7 @@ const RealtimeDashboard = () => {
           unit="%"
           icon={threatInfo.icon}
           color={threatInfo.color}
-          trend={Math.random() * 10 - 5}
+          trend={history.quantumThreat.length > 1 ? ((metrics.quantumThreat - history.quantumThreat[history.quantumThreat.length-2]) / Math.max(1, history.quantumThreat[history.quantumThreat.length-2]) * 100) : 0}
           sparkline={history.quantumThreat}
         />
         
@@ -308,7 +319,7 @@ const RealtimeDashboard = () => {
           unit="/100"
           icon={Shield}
           color="#4488ff"
-          trend={Math.random() * 8 - 4}
+          trend={history.securityScore.length > 1 ? ((metrics.securityScore - history.securityScore[history.securityScore.length-2]) / Math.max(1, history.securityScore[history.securityScore.length-2]) * 100) : 0}
           sparkline={history.securityScore}
         />
         
@@ -318,7 +329,7 @@ const RealtimeDashboard = () => {
           unit="ops/min"
           icon={Globe}
           color="#ff6644"
-          trend={Math.random() * 15 - 7.5}
+          trend={0}
         />
       </div>
 
@@ -351,7 +362,7 @@ const RealtimeDashboard = () => {
             <Cpu size={20} />
             <div>
               <div className="status-label">CPU Usage</div>
-              <div className="status-value">{(45 + Math.random() * 20).toFixed(1)}%</div>
+              <div className="status-value">{metrics.cpuUsage.toFixed(1)}%</div>
             </div>
           </div>
           
@@ -367,7 +378,7 @@ const RealtimeDashboard = () => {
             <Timer size={20} />
             <div>
               <div className="status-label">Latency</div>
-              <div className="status-value">{(25 + Math.random() * 15).toFixed(0)}ms</div>
+              <div className="status-value">{metrics.latency}ms</div>
             </div>
           </div>
           
