@@ -104,6 +104,92 @@ type MultiChainMetrics = record {
     bridge_uptime: float64;
 };
 
+type CompressionPerformanceMetrics = record {
+    compression_ratio: float64;
+    compression_speed_mbps: float64;
+    decompression_speed_mbps: float64;
+    algorithm: text;
+    total_batches_processed: nat64;
+    average_batch_size: float64;
+    storage_savings_percentage: float64;
+};
+
+type CompressedBatch = record {
+    batch_id: text;
+    original_size: nat64;
+    compressed_size: nat64;
+    compression_ratio: float64;
+    transaction_count: nat32;
+    created_at: int64;
+    algorithm: text;
+};
+
+type BatchConfig = record {
+    compression_algorithm: text;
+    priority: text;
+    max_size: opt nat64;
+};
+
+type DemoTransaction = record {
+    id: text;
+    sender: text;
+    recipient: text;
+    amount: float64;
+    timestamp: int64;
+    tx_type: text;
+};
+
+type CryptoBenchmarkResult = record {
+    algorithm: text;
+    total_time_ns: nat64;
+    quantum_resistant: bool;
+    success: bool;
+    message_length: nat64;
+};
+
+type BitcoinBalance = record {
+    native_bitcoin: nat64;
+    wrapped_bitcoin: nat64;
+    total_bitcoin: nat64;
+};
+
+type EthereumBalance = record {
+    native_ethereum: nat64;
+    wrapped_ethereum: nat64;
+    total_ethereum: nat64;
+};
+
+type IcpBalance = record {
+    native_icp: nat64;
+    wrapped_icp: nat64;
+    total_icp: nat64;
+};
+
+type SolanaBalance = record {
+    native_solana: nat64;
+    wrapped_solana: nat64;
+    total_solana: nat64;
+};
+
+type CryptoRecommendation = record {
+    recommended_algorithm: text;
+    risk_level: text;
+    quantum_threat_level: nat8;
+    efficiency_score: float64;
+    security_rating: text;
+    reason: text;
+    alternative_algorithms: vec text;
+};
+
+type VaultStatistics = record {
+    total_deposits_satoshi: nat64;
+    total_transactions: nat64;
+    native_addresses: nat32;
+    wrapped_addresses: nat32;
+    deposit_threshold: nat64;
+    vault_active: bool;
+};
+
 service : {
     "greet": (text) -> (text) query;
     "get_balance": (text) -> (float64) query;
@@ -128,4 +214,48 @@ service : {
     "get_block_by_hash": (text) -> (opt PolyBlock) query;
     "get_all_transactions": () -> (vec PolyTransaction) query;
     "get_blockchain_stats": () -> (BlockchainStats) query;
+    "get_sequencer_created_blocks": (opt nat32) -> (vec PolyBlock) query;
+    "verify_transaction_in_blockchain": (text, text, float64) -> (opt text) query;
+    
+    // Bitcoin Vault functions
+    "deposit_bitcoin": (text, nat64) -> (variant { Ok : text; Err : text });
+    "deposit_bitcoin_with_crypto": (text, nat64, opt text, opt nat8) -> (variant { Ok : text; Err : text });
+    "get_bitcoin_balance": (text) -> (BitcoinBalance) query;
+    "withdraw_bitcoin": (text, nat64, bool) -> (variant { Ok : text; Err : text });
+    "withdraw_bitcoin_adaptive": (text, nat64, bool, opt nat8) -> (variant { Ok : text; Err : text });
+    "get_crypto_recommendation": (nat64, opt nat8, opt bool) -> (CryptoRecommendation) query;
+    "get_vault_statistics": () -> (VaultStatistics) query;
+    
+    // Ethereum functions
+    "deposit_ethereum": (text, nat64) -> (variant { Ok : text; Err : text });
+    "withdraw_ethereum": (text, nat64, bool) -> (variant { Ok : text; Err : text });
+    "get_ethereum_balance": (text) -> (EthereumBalance) query;
+    
+    // ICP functions
+    "deposit_icp": (text, nat64) -> (variant { Ok : text; Err : text });
+    "withdraw_icp": (text, nat64, bool) -> (variant { Ok : text; Err : text });
+    "get_icp_balance": (text) -> (IcpBalance) query;
+    
+    // Solana functions
+    "deposit_solana": (text, nat64) -> (variant { Ok : text; Err : text });
+    "withdraw_solana": (text, nat64, bool) -> (variant { Ok : text; Err : text });
+    "get_solana_balance": (text) -> (SolanaBalance) query;
+    
+    // Crypto & Benchmark functions  
+    "crypto_algorithm_benchmark": (text, text) -> (variant { Ok : CryptoBenchmarkResult; Err : text });
+    
+    // Compression functions
+    "get_compression_performance_metrics": () -> (CompressionPerformanceMetrics) query;
+    "list_compressed_batches": () -> (vec CompressedBatch) query;
+    "get_compressed_batch": (text) -> (opt CompressedBatch) query;
+    "create_compressed_batch": (vec PolyTransaction, opt BatchConfig) -> (variant { Ok : text; Err : text });
+    "run_compression_benchmark": (vec nat32, opt text) -> (variant { Ok : vec CompressionPerformanceMetrics; Err : text });
+    "generate_realistic_demo_data": (text, nat32) -> (variant { Ok : vec DemoTransaction; Err : text });
+    "fetch_real_icp_data": (nat32) -> (variant { Ok : vec DemoTransaction; Err : text });
+    "simulate_network_stress_test": (vec PolyTransaction, text) -> (variant { Ok : text; Err : text });
+    "analyze_icp_compression_benefits": (vec PolyTransaction) -> (variant { Ok : text; Err : text });
+    "get_api_performance_info": () -> (text) query;
+    
+    // Quantum readiness
+    "is_quantum_ready_all_chains": () -> (bool) query;
 }

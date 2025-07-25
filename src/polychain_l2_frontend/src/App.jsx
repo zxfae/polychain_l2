@@ -1,142 +1,157 @@
 import React, { useState, useEffect } from 'react';
 import { polychain_l2_backend } from 'declarations/polychain_l2_backend';
 import { safeConvertObject } from './utils/bigint-utils';
-import { Shield, Activity, AlertTriangle, CheckCircle, Building2, Brain, Zap, BarChart3, Package, Bitcoin, Link } from 'lucide-react';
-import BitcoinVault from './components/BitcoinVault';
-import MultiChainVault from './components/MultiChainVault';
-import UnifiedMetrics from './components/UnifiedMetrics';
-import CryptoBenchmark from './components/CryptoBenchmark';
-import PerformanceMetrics from './components/PerformanceMetrics';
-import TransactionManager from './components/TransactionManager';
-import TransactionBatchCompressor from './components/TransactionBatchCompressor';
-import TransactionSequencer from './components/TransactionSequencer';
-import BlockchainExplorer from './components/BlockchainExplorer';
-import CryptoAI from './components/CryptoAI';
+import { Shield, Activity, AlertTriangle, CheckCircle, Building2, BarChart3, Link, Menu, X, Gauge, Zap, Brain, Eye, Home, Lock } from 'lucide-react';
+import MultiChainUnifiedVault from './components/MultiChainUnifiedVault';
+import UnifiedPerformanceAnalytics from './components/UnifiedPerformanceAnalytics';
+import CryptoToolsHub from './components/CryptoToolsHub';
+import SpectacularBlockchainExplorer from './components/SpectacularBlockchainExplorer';
+import SpectacularTransactionSequencer from './components/SpectacularTransactionSequencer';
+import RealtimeDashboard from './components/RealtimeDashboard';
+import QuantumThreatSimulator from './components/QuantumThreatSimulator';
+import TransactionFlowVisualizer from './components/TransactionFlowVisualizer';
+import CryptoRace from './components/CryptoRace';
+import SpectacularLanding from './components/SpectacularLanding';
+import CryptographyShowcase from './components/CryptographyShowcase';
 import './App.css';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('explorer');
-  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('home');
+  const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState(null);
   const [advancedMetrics, setAdvancedMetrics] = useState(null);
-
-  useEffect(() => {
-    loadMetrics();
-    loadAdvancedMetrics();
-  }, []);
-
-  const loadMetrics = async () => {
-    try {
-      setLoading(true);
-      const data = await polychain_l2_backend.get_performance_metrics();
-      const safeData = safeConvertObject(data);
-      setMetrics(safeData);
-    } catch (error) {
-      console.error('Failed to load metrics:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadAdvancedMetrics = async () => {
-    try {
-      const data = await polychain_l2_backend.get_layer2_advanced_metrics();
-      const safeData = safeConvertObject(data);
-      setAdvancedMetrics(safeData);
-    } catch (error) {
-      console.error('Failed to load advanced metrics:', error);
-    }
-  };
-
-  const getThreatLevel = () => {
-    if (!advancedMetrics) return 'medium';
-    const level = advancedMetrics.quantum_threat_level;
-    if (level >= 80) return 'danger';
-    if (level >= 50) return 'warning';
-    return 'success';
-  };
-
-  const getThreatIcon = () => {
-    const level = getThreatLevel();
-    switch (level) {
-      case 'danger': return AlertTriangle;
-      case 'warning': return Shield;
-      case 'success': return CheckCircle;
-      default: return Shield;
-    }
-  };
+  const [isNavOpen, setIsNavOpen] = useState(false);
 
   const tabs = [
-    { id: 'multi-vault', label: 'Multi-Chain Vault', icon: Building2 },
-    { id: 'explorer', label: 'Blockchain Explorer', icon: Link },
-    { id: 'sequencer', label: 'TX Sequencer', icon: Activity },
-    { id: 'unified-metrics', label: 'Universal Analytics', icon: BarChart3 },
-    { id: 'compressor', label: 'Compression', icon: Package },
-    { id: 'vault', label: 'Bitcoin Legacy', icon: Bitcoin },
-    { id: 'crypto-ai', label: 'Crypto AI', icon: Brain },
-    { id: 'benchmark', label: 'Benchmark', icon: Zap },
+    { id: 'home', label: 'Home', icon: Home, component: <SpectacularLanding onNavigate={setActiveTab} />,description: "Polychain Home"},
+    { id: 'explorer', label: 'Blockchain Explorer', icon: Eye, component: <SpectacularBlockchainExplorer actor={polychain_l2_backend} />, description: "Explorez les blocs et transactions avec style spectaculaire." },
+    { id: 'sequencer', label: 'TX Sequencer', icon: Activity, component: <SpectacularTransactionSequencer actor={polychain_l2_backend} />, description: "Visualisez le séquenceur de transactions avec animations." },
+    { id: 'multi-vault', label: 'Multi-Chain Vault', icon: Building2, component: <MultiChainUnifiedVault />, description: "Gérez vos actifs sur plusieurs chaînes." },
+    { id: 'crypto-tools', label: 'Crypto Tools Hub', icon: Shield, component: <CryptoToolsHub />, description: "Accédez à des outils cryptographiques." },
+    { id: 'crypto-showcase', label: 'Crypto Center', icon: Lock, component: <CryptographyShowcase />, description: "Centre de commande cryptographique spectaculaire." },
+    { id: 'crypto-race', label: 'Crypto Race', icon: Zap, component: <CryptoRace />, description: "Vrais benchmarks de tes algorithmes cryptographiques." },
+    { id: 'tx-flow', label: 'Transaction Flow', icon: Link, component: <TransactionFlowVisualizer />, description: "Visualiseur de flux de transactions en temps réel." },
+    { id: 'dashboard', label: 'Live Dashboard', icon: Gauge, component: <RealtimeDashboard />, description: "Dashboard avec tes vraies métriques animées." },
   ];
 
-  return (
-    <div className="app">
-      <header className="header">
-        <div className="header-content">
-          <div className="header-left">
-            <img src="/logo2.svg" alt="Polychain L2" className="logo" />
-            <h1>
-              <Link size={20} />
-              Polychain L2 - Universal Multi-Chain
-            </h1>
-          </div>
-          <div className="header-right">
-            {advancedMetrics && (
-              <>
-                <div className={`status-indicator ${getThreatLevel()}`}>
-                  {React.createElement(getThreatIcon(), { size: 16 })}
-                  <span>Quantum Threat: {advancedMetrics.quantum_threat_level}%</span>
-                </div>
-                <div className="status-indicator success">
-                  <Activity size={16} />
-                  <span>Security: {advancedMetrics.security_score.toFixed(0)}/100</span>
-                </div>
-              </>
-            )}
-            {metrics && (
-              <div className="status-indicator success">
-                <CheckCircle size={16} />
-                <span>TPS: {metrics.transactions_per_second.toLocaleString()}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [metricsData, advancedMetricsData] = await Promise.all([
+          polychain_l2_backend.get_performance_metrics(),
+          polychain_l2_backend.get_layer2_advanced_metrics()
+        ]);
+        setMetrics(safeConvertObject(metricsData));
+        setAdvancedMetrics(safeConvertObject(advancedMetricsData));
+      } catch (error) {
+        console.error('Failed to load initial data:', error);
+      } finally {
+        setTimeout(() => setLoading(false), 500); // Petite temporisation pour l'effet
+      }
+    };
+    loadData();
+  }, []);
 
-      <nav className="navigation">
+  const getThreatStatus = () => {
+    if (!advancedMetrics) return 'status-warning';
+    const level = advancedMetrics.quantum_threat_level;
+    if (level >= 80) return 'status-danger';
+    if (level >= 50) return 'status-warning';
+    return 'status-success';
+  };
+  
+  const getThreatIcon = () => {
+    if (!advancedMetrics) return Shield;
+    const level = advancedMetrics.quantum_threat_level;
+    if (level >= 80) return AlertTriangle;
+    if (level >= 50) return Shield;
+    return CheckCircle;
+  };
+
+  const activeComponent = tabs.find(tab => tab.id === activeTab);
+
+  const renderSidebar = () => (
+    <div className="sidebar-content">
+      <div className="logo-container">
+<img src="/Polychain.png" alt="Polychain L2 Logo" className="logo-image" />
+        <h1>Polychain</h1>
+        <p>Universal Multi-Chain</p>
+      </div>
+      <nav className="nav-menu">
         {tabs.map((tab) => (
-          <button 
+          <button
             key={tab.id}
             className={`nav-button ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => {
+              setActiveTab(tab.id);
+              setIsNavOpen(false);
+            }}
           >
-            <tab.icon size={18} />
+            <tab.icon />
             <span>{tab.label}</span>
           </button>
         ))}
       </nav>
+    </div>
+  );
 
-      <main className="main-content">
-        {loading && <div className="loading">Loading...</div>}
-        
-        {activeTab === 'multi-vault' && <MultiChainVault />}
-        {activeTab === 'explorer' && <BlockchainExplorer actor={polychain_l2_backend} />}
-        {activeTab === 'sequencer' && <TransactionSequencer actor={polychain_l2_backend} />}
-        {activeTab === 'unified-metrics' && <UnifiedMetrics />}
-        {activeTab === 'compressor' && <TransactionBatchCompressor />}
-        {activeTab === 'vault' && <BitcoinVault />}
-        {activeTab === 'crypto-ai' && <CryptoAI />}
-        {activeTab === 'benchmark' && <CryptoBenchmark />}
-        {activeTab === 'analytics' && <PerformanceMetrics />}
-      </main>
+  return (
+    <div className="app-container">
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner"></div>
+        </div>
+      )}
+
+      {isNavOpen && <div className="backdrop" onClick={() => setIsNavOpen(false)}></div>}
+
+      <div className="app-layout">
+        {/* Barre latérale (Sidebar) */}
+        <aside className={`sidebar ${isNavOpen ? 'nav-open' : ''}`}>
+          {renderSidebar()}
+        </aside>
+
+        {/* Header (version mobile) */}
+        <header className="mobile-header">
+           <span className="mobile-title">{activeComponent?.label}</span>
+           <button className="hamburger" onClick={() => setIsNavOpen(true)}>
+             <Menu size={24} />
+           </button>
+        </header>
+
+        {/* Header (version desktop) */}
+        <header className="header">
+          <div>
+            {/* Peut-être des fils d'ariane ou autre chose ici */}
+          </div>
+          <div className="status-indicators">
+            {advancedMetrics && (
+              <div className={`status-indicator ${getThreatStatus()}`}>
+                {React.createElement(getThreatIcon(), { size: 16 })}
+                <span className="label">Quantum Threat:</span>
+                <span className="value">{advancedMetrics.quantum_threat_level}%</span>
+              </div>
+            )}
+            {metrics && (
+              <div className="status-indicator">
+                <Activity size={16} />
+                <span className="label">TPS:</span>
+                <span className="value">{metrics.transactions_per_second.toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {/* Contenu principal */}
+        <main className="main-content">
+          <div className="card">
+            <div className="card-body">
+              {activeComponent?.component}
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,538 @@
+/* --- BlockchainExplorer Component Styles :: Aligned with SpectacularBlockchainExplorer --- */
+
+/* ==========================================================================
+   Component-specific variables (aligned with SpectacularBlockchainExplorer)
+   ========================================================================== */
+:root {
+  /* Colors consistent with SpectacularBlockchainExplorer */
+  --status-success: #44ff88;
+  --status-warning: #ffaa44;
+  --status-danger: #ff6644;
+  --accent-blue: #4488ff;
+
+  /* Gradient and effects */
+  --explorer-gradient: linear-gradient(
+    135deg, 
+    #0a0a0a 0%, 
+    #1a1a2e 25%, 
+    #16213e 50%, 
+    #0f3460 75%, 
+    #533483 100%
+  );
+  --explorer-shimmer: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(68, 255, 136, 0.3) 50%,
+    transparent 100%
+  );
+  --explorer-glow: 0 0 15px rgba(68, 255, 136, 0.5);
+}
+
+/* ==========================================================================
+   Background Canvas (Particle Animation)
+   ========================================================================== */
+.explorer-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.5;
+}
+
+/* ==========================================================================
+   Main Container
+   ========================================================================== */
+.explorer-layout {
+  position: relative;
+  min-height: 100vh;
+  background: var(--explorer-gradient);
+  padding: 2.5rem; /* Increased padding for a more spacious feel */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  z-index: 2;
+}
+
+.hub-content {
+  position: relative;
+  z-index: 3;
+  max-width: 1280px; /* Slightly wider for better content spread */
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* ==========================================================================
+   Layout & Panels
+   ========================================================================== */
+.explorer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem; /* Increased gap for better separation */
+}
+
+/* Shared styles for all main panels */
+.stats-panel,
+.recent-blocks-panel,
+.details-panel {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 2rem;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.panel-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  background: linear-gradient(45deg, #4488ff, #44ff88);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 4s ease-in-out infinite;
+}
+
+.stats-panel .panel-title {
+  margin-bottom: 1.5rem;
+}
+
+/* ==========================================================================
+   Stats Grid
+   ========================================================================== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Wider cards for clarity */
+  gap: 1.5rem; /* Increased gap */
+}
+
+.stat-item {
+  background: rgba(255, 255, 255, 0.06); /* Slightly darker for better contrast */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px; /* Larger radius for softer look */
+  padding: 1.5rem; /* More internal padding */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-item:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--explorer-glow);
+}
+
+.stat-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 3px; /* Slightly thicker shimmer */
+  background: var(--explorer-shimmer);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.stat-item .label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1rem; /* Slightly larger for readability */
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 0.75rem;
+}
+
+.stat-item .label svg {
+  width: 18px;
+  height: 18px;
+  color: var(--accent-blue);
+}
+
+.stat-item .value {
+  font-size: 1.75rem; /* Larger for emphasis */
+  font-weight: 600;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ==========================================================================
+   Recent Blocks (Horizontal)
+   ========================================================================== */
+.recent-blocks-horizontal-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 1.5rem;
+  padding: 1rem 0.5rem; /* Padding for scrollbar and aesthetics */
+  margin: 0 -0.5rem; /* Counteract padding for alignment */
+}
+
+/* Custom Scrollbar */
+.recent-blocks-horizontal-container::-webkit-scrollbar {
+  height: 8px;
+}
+.recent-blocks-horizontal-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+.recent-blocks-horizontal-container::-webkit-scrollbar-thumb {
+  background: rgba(68, 136, 255, 0.6);
+  border-radius: 4px;
+}
+.recent-blocks-horizontal-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(68, 136, 255, 0.8);
+}
+
+.block-item {
+  flex: 0 0 320px; /* Not too big: 320px width, no flex grow/shrink */
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-left: 5px solid transparent;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.block-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-left-color: #44ff88;
+  transform: translateY(-5px); /* Vertical lift on hover */
+  box-shadow: var(--explorer-glow);
+}
+
+.block-item.selected {
+  background: rgba(68, 255, 136, 0.12);
+  border-left-color: #44ff88;
+  transform: translateY(-5px); /* Consistent vertical lift */
+  box-shadow: var(--explorer-glow);
+}
+
+.block-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.block-height {
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.1rem;
+}
+
+.block-height svg {
+  width: 18px;
+  height: 18px;
+  color: #44ff88;
+}
+
+.block-tx-count {
+  font-size: 0.9rem;
+  background: rgba(68, 255, 136, 0.25);
+  color: #44ff88;
+  padding: 0.35rem 1rem;
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+.block-hash {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   Details Panel
+   ========================================================================== */
+.details-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  gap: 1.5rem;
+}
+
+.details-placeholder svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.5;
+}
+
+.details-placeholder h3 {
+  color: #ffffff;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.details-placeholder p {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.details-header {
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.details-header h3 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(45deg, #4488ff, #44ff88);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 4s ease-in-out infinite;
+}
+
+.details-header span {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.details-header span svg {
+  width: 14px;
+  height: 14px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.detail-item {
+  font-size: 0.95rem;
+}
+
+.detail-item .label {
+  display: block;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.detail-item .value {
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  word-break: break-all;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+/* ==========================================================================
+   Transactions Section
+   ========================================================================== */
+.transactions-section h3 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.transactions-section h3 svg {
+  width: 20px;
+  height: 20px;
+  color: #44ff88;
+}
+
+.transactions-list .transaction-item {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.transactions-list .transaction-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: var(--explorer-glow);
+}
+
+.transactions-list .transaction-item .detail-item {
+  margin-bottom: 0.75rem;
+}
+
+.transactions-list .transaction-item .detail-item .value {
+  font-size: 0.9rem;
+}
+
+.transactions-list .transaction-item div[style*="text-align: center"] {
+  text-align: center;
+  margin: 0.75rem 0;
+}
+
+.transactions-list .transaction-item div[style*="text-align: center"] svg {
+  width: 18px;
+  height: 18px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.transactions-list p {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Refresh Button
+   ========================================================================== */
+.button.button-secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(45deg, #4488ff, #6644ff);
+  color: #ffffff;
+  border: none;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.button.button-secondary:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(68, 136, 255, 0.4);
+}
+
+.button.button-secondary:disabled {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+}
+
+.button.button-secondary svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ds-animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ==========================================================================
+   Floating Orbs
+   ========================================================================== */
+.floating-orb {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  background: rgba(68, 255, 136, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 10;
+}
+
+.orb-1 { top: 10%; left: 5%; animation: float 6s ease-in-out infinite; }
+.orb-2 { bottom: 15%; right: 10%; animation: float 6s ease-in-out infinite 1.5s; }
+.orb-3 { top: 60%; left: 20%; animation: float 6s ease-in-out infinite 3s; }
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
+@keyframes glow { 0%, 100% { box-shadow: 0 0 5px rgba(68, 255, 136, 0.3); } 50% { box-shadow: 0 0 20px rgba(68, 255, 136, 0.5); } }
+@keyframes gradientShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; translateY(0); } }
+@keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 25% { transform: translateY(-10px) rotate(3deg); } 50% { transform: translateY(0px) rotate(0deg); } 75% { transform: translateY(-5px) rotate(-3deg); } }
+@keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .explorer-layout {
+    padding: 1.5rem;
+  }
+
+  .hub-content {
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .stat-item .value { font-size: 1.5rem; }
+  .panel-title { font-size: 1.4rem; }
+  .details-header h3 { font-size: 1.4rem; }
+  .transactions-section h3 { font-size: 1.15rem; }
+}
+
+/* ==========================================================================
+   Accessibility Enhancements
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .explorer-layout, .stats-panel, .recent-blocks-panel, .details-panel,
+  .stat-item, .block-item, .transaction-item, .button.button-secondary,
+  .floating-orb {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .stats-panel, .recent-blocks-panel, .details-panel,
+  .stat-item, .block-item, .transaction-item, .detail-item .value {
+    background: rgba(0, 0, 0, 0.8);
+    border-color: #ffffff;
+    backdrop-filter: none;
+  }
+
+  .panel-title, .details-header h3, .transactions-section h3,
+  .stat-item .label, .stat-item .value, .block-height, .block-hash,
+  .block-tx-count, .detail-item .label, .detail-item .value,
+  .details-placeholder h3, .details-placeholder p, .transactions-list p {
+    color: #ffffff;
+    text-shadow: none;
+    -webkit-text-fill-color: #ffffff;
+  }
+
+  .button.button-secondary { background: #ffffff; color: #000000; }
+  .block-item:hover, .block-item.selected { border-left-color: #ffffff; }
+  .floating-orb { background: #ffffff; color: #000000; }
+}

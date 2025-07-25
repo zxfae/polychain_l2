@@ -14,5 +14,8 @@
   "type": "module",
   "workspaces": [
     "src/polychain_l2_frontend"
-  ]
+  ],
+  "devDependencies": {
+    "vite": "^7.0.5"
+  }
 }

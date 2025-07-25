@@ -1,327 +1,302 @@
-/* --- chainselector component styles :: v1.3 bold, clean & professional --- */
+/* --- ChainSelector Component Styles :: v3.1 aligned with BlockchainExplorer --- */
 
 /* ==========================================================================
-   variables (aligned with crypto-ai.css, refined)
+   Component-specific variables (aligned with BlockchainExplorer and MultiChainUnifiedVault)
    ========================================================================== */
 :root {
-  /* colors */
-  --chain-btc: #a68b00;            /* golden bronze for bitcoin */
-  --chain-eth: #1e3a8a;            /* deep navy for ethereum */
-  --chain-icp: #15803d;            /* forest green for icp */
-  --chain-sol: #7f1d1d;            /* deep bordeaux for solana */
-  --accent-glow: #2563eb;          /* vibrant blue for highlights */
-  --glass-bg: rgba(17, 24, 39, 0.75); /* enhanced frosted glass */
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --gradient-primary: linear-gradient(135deg, #2563eb, #15803d 50%, #4ade80);
-  --gradient-glow: linear-gradient(45deg, rgba(37, 99, 235, 0.5), rgba(21, 128, 61, 0.3));
-  --shimmer-glow: linear-gradient(
+  /* Chain-specific colors (preserved) */
+  --chain-btc: #a68b00; /* Golden bronze for Bitcoin */
+  --chain-eth: #1e3a8a; /* Deep navy for Ethereum */
+  --chain-icp: #15803d; /* Forest green for ICP */
+  --chain-sol: #7f1d1d; /* Deep bordeaux for Solana */
+
+  /* Colors consistent with BlockchainExplorer */
+  --status-success: #44ff88;
+  --status-warning: #ffaa44;
+  --status-danger: #ff6644;
+  --accent-blue: #4488ff;
+
+  /* Effects aligned with BlockchainExplorer */
+  --selector-gradient: linear-gradient(
+    135deg, 
+    #0a0a0a 0%, 
+    #1a1a2e 25%, 
+    #16213e 50%, 
+    #0f3460 75%, 
+    #533483 100%
+  );
+  --selector-shimmer: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.2) 50%,
+    rgba(68, 255, 136, 0.3) 50%,
     transparent 100%
   );
-  --neutral-50: #f9fafb;           /* light text for high contrast */
-  --neutral-200: #d4d4d8;          /* soft gray for secondary text */
-  --neutral-700: #3f3f46;          /* dark gray for backgrounds */
-  --neutral-800: #18181b;          /* deep anthracite for depth */
-
-  /* shadows and transitions */
-  --shadow-glow: 0 0 15px rgba(37, 99, 235, 0.5);
-  --shadow-soft: 0 6px 14px rgba(0, 0, 0, 0.3);
-  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-glow: all 0.4s ease-in-out;
-
-  /* typography */
-  --font-primary: 'inter', -apple-system, blinkmacsystemfont, sans-serif;
-  --font-display: 'montserrat', sans-serif; /* bold, professional headings */
-
-  /* scanline effect */
-  --scanline-bg: linear-gradient(
-    0deg,
-    rgba(17, 24, 39, 0) 0%,
-    rgba(17, 24, 39, 0.2) 50%,
-    rgba(17, 24, 39, 0) 100%
-  );
+  --selector-glow: 0 0 15px rgba(68, 255, 136, 0.5);
 }
 
 /* ==========================================================================
-   chain selector container
+   Background Canvas (Particle Animation)
+   ========================================================================== */
+.background-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.5;
+}
+
+/* ==========================================================================
+   Chain Selector Container
    ========================================================================== */
 .chain-selector {
-  margin-bottom: 2.5rem;
-  font-family: var(--font-primary);
   position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
   padding: 2rem;
-  background: linear-gradient(180deg, var(--glass-bg), rgba(21, 128, 61, 0.1));
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: inset 0 0 80px rgba(255, 255, 255, 0.03), var(--shadow-soft);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  z-index: 2;
 }
 
-.chain-selector::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: var(--scanline-bg);
-  background-size: 100% 10px;
-  opacity: 0.3;
-  animation: scan 4s linear infinite;
+.selector-content {
+  position: relative;
+  z-index: 3;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
 }
 
 /* ==========================================================================
-   header
+   Panel Header
    ========================================================================== */
-.chain-selector-header {
+.panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  animation: fadeInUp 0.8s ease-out;
 }
 
-.chain-selector-header h3 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
+.panel-title {
+  font-size: 1.6rem;
   font-weight: 700;
-  color: var(--neutral-50);
+  color: #ffffff;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  position: relative;
+  background: linear-gradient(45deg, #4488ff, #44ff88);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 4s ease-in-out infinite;
 }
 
-.chain-selector-header h3 svg {
-  width: 20px;
-  height: 20px;
-  color: var(--accent-glow);
-  filter: drop-shadow(0 0 6px var(--accent-glow));
-  transition: var(--transition-glow);
+.panel-title svg {
+  width: 24px;
+  height: 24px;
+  color: var(--status-success);
+  filter: drop-shadow(0 0 8px rgba(68, 255, 136, 0.5));
+  transition: transform 0.3s ease;
 }
 
-.chain-selector-header h3:hover svg {
-  transform: scale(1.1);
+.panel-title:hover svg {
+  transform: scale(1.1) rotate(5deg);
 }
 
 .quantum-badge {
-  background: var(--gradient-primary);
-  color: var(--neutral-50);
-  padding: 0.3rem 0.9rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  box-shadow: var(--shadow-glow);
+  gap: 0.5rem;
+  background: rgba(68, 255, 136, 0.1);
+  color: var(--status-success);
+  padding: 0.75rem 1.5rem;
+  border-radius: 30px;
+  border: 1px solid rgba(68, 255, 136, 0.3);
+  font-size: 0.9rem;
+  font-weight: 600;
+  animation: glow 3s ease-in-out infinite;
   position: relative;
   overflow: hidden;
-  transition: var(--transition-glow);
+}
+
+.quantum-badge svg {
+  width: 16px;
+  height: 16px;
+  color: var(--status-success);
 }
 
 .quantum-badge::after {
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
+  left: -100%;
   width: 100%;
   height: 100%;
-  background: var(--shimmer-glow);
-  transform: translatex(-100%);
-  animation: shimmer 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  opacity: 0.5;
-}
-
-.quantum-badge svg {
-  width: 16px;
-  height: 16px;
-  color: var(--neutral-50);
-  z-index: 1;
-}
-
-.quantum-badge:hover {
-  filter: brightness(1.1);
-  transform: scale(1.05);
-  box-shadow: 0 0 20px var(--accent-glow);
+  background: var(--selector-shimmer);
+  animation: shimmer 3s ease-out infinite;
 }
 
 /* ==========================================================================
-   chain grid
+   Chains Horizontal Container
    ========================================================================== */
-.chain-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
+.chains-horizontal-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 1.5rem;
+  padding: 1rem 0.5rem;
+  margin: 0 -0.5rem;
+}
+
+.chains-horizontal-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.chains-horizontal-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.chains-horizontal-container::-webkit-scrollbar-thumb {
+  background: rgba(68, 136, 255, 0.6);
+  border-radius: 4px;
+}
+
+.chains-horizontal-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(68, 136, 255, 0.8);
 }
 
 /* ==========================================================================
-   chain card
+   Chain Item
    ========================================================================== */
-.chain-card {
-  background: var(--glass-bg);
-  border: 2px solid var(--glass-border);
-  border-radius: 14px;
+.chain-item {
+  flex: 0 0 280px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
   padding: 1.5rem;
   cursor: pointer;
-  transition: var(--transition-smooth);
-  position: relative;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  animation: cardfadein 0.8s var(--transition-smooth) forwards;
-  animation-delay: calc(var(--i, 0) * 0.15s);
-  box-shadow: var(--shadow-soft);
+  transition: all 0.3s ease;
+  border-left: 5px solid transparent;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  animation: fadeInUp 0.8s ease-out calc(var(--i, 0) * 0.15s) forwards;
 }
 
-.chain-card:hover,
-.chain-card:focus {
-  transform: translatey(-5px) scale(1.02);
-  box-shadow: var(--shadow-glow);
-  border-color: var(--chain-color);
-  background: var(--chain-color)20;
+.chain-item:hover,
+.chain-item:focus {
+  background: rgba(255, 255, 255, 0.12);
+  border-left-color: var(--chain-color);
+  transform: translateY(-5px);
+  box-shadow: var(--selector-glow);
 }
 
-.chain-card.selected {
-  background: var(--chain-color)25;
-  border: 2px solid var(--chain-color);
-  box-shadow: 0 0 25px var(--chain-color)50;
+.chain-item.selected {
+  background: rgba(68, 255, 136, 0.12);
+  border-left-color: var(--chain-color);
+  transform: translateY(-5px);
+  box-shadow: var(--selector-glow);
 }
 
-.chain-card:focus {
-  outline: 3px solid var(--accent-glow);
+.chain-item:focus {
+  outline: 3px solid var(--status-success);
   outline-offset: 4px;
 }
 
-.chain-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: var(--scanline-bg);
-  background-size: 100% 8px;
-  opacity: 0.2;
-  animation: scan 3s linear infinite;
-}
-
-.chain-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--shimmer-glow);
-  transform: translatex(-100%);
-  animation: shimmer 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  opacity: 0.4;
-}
-
 /* ==========================================================================
-   chain header
+   Chain Header
    ========================================================================== */
 .chain-header {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
   margin-bottom: 1rem;
 }
 
 .chain-header svg {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   color: var(--chain-color);
   filter: drop-shadow(0 0 8px var(--chain-color));
-  transition: var(--transition-glow);
+  transition: transform 0.3s ease;
 }
 
-.chain-header svg:hover {
+.chain-header:hover svg {
   transform: scale(1.15);
 }
 
 .chain-info {
-  margin-left: 1rem;
   display: flex;
   flex-direction: column;
 }
 
 .chain-name {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: var(--neutral-50);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  position: relative;
-  transition: var(--transition-smooth);
-}
-
-.chain-name:hover::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: var(--shimmer-glow);
-  animation: glitch 1.5s infinite;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
 }
 
 .chain-token {
-  font-size: 0.875rem;
-  color: var(--neutral-50);
-  background: var(--chain-color)30;
-  padding: 0.25rem 0.6rem;
-  border-radius: 6px;
-  margin-top: 0.3rem;
+  font-size: 0.85rem;
+  color: #ffffff;
+  background: color-mix(in srgb, var(--chain-color) 30%, transparent);
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+  margin-top: 0.25rem;
   align-self: flex-start;
   font-weight: 600;
 }
 
 /* ==========================================================================
-   chain description
+   Chain Description
    ========================================================================== */
 .chain-description {
-  color: var(--neutral-200);
-  font-size: 0.9375rem;
-  line-height: 1.7;
-  letter-spacing: 0.01em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 /* ==========================================================================
-   chain metrics
+   Chain Metrics
    ========================================================================== */
 .chain-metrics {
   display: flex;
-  gap: 1.25rem;
-  margin-bottom: 0.75rem;
+  gap: 1rem;
+  margin-top: 0.75rem;
 }
 
 .metric {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
 }
 
 .metric span:first-child {
-  color: var(--neutral-200);
+  color: rgba(255, 255, 255, 0.7);
   font-weight: 500;
 }
 
 .metric-value {
   font-weight: 700;
   color: var(--chain-color);
-  margin-top: 0.3rem;
-  text-shadow: 0 0 4px var(--chain-color);
-  position: relative;
+  margin-top: 0.25rem;
 }
 
 .metric-value.quantum {
-  color: var(--chain-icp);
+  color: var(--status-success);
 }
 
 /* ==========================================================================
-   selection indicator
+   Selection Indicator
    ========================================================================== */
 .selection-indicator {
   position: absolute;
@@ -346,7 +321,38 @@
 }
 
 /* ==========================================================================
-   animations
+   Floating Orbs
+   ========================================================================== */
+.floating-orb {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  background: rgba(68, 255, 136, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 2;
+}
+
+.orb-1 {
+  top: 10%;
+  left: 5%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.orb-2 {
+  bottom: 15%;
+  right: 10%;
+  animation: float 6s ease-in-out infinite 1.5s;
+}
+
+/* ==========================================================================
+   Animations
    ========================================================================== */
 @keyframes pulse {
   0% { opacity: 1; transform: scale(1); box-shadow: 0 0 12px var(--chain-color); }
@@ -354,86 +360,97 @@
   100% { opacity: 1; transform: scale(1); box-shadow: 0 0 12px var(--chain-color); }
 }
 
-@keyframes scan {
-  0% { background-position: 0 0; }
-  100% { background-position: 0 40px; }
-}
-
 @keyframes shimmer {
-  0% { transform: translatex(-100%); }
-  100% { transform: translatex(100%); }
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
-@keyframes cardfadein {
-  from { opacity: 0; transform: translatey(15px) scale(0.95); }
-  to { opacity: 1; transform: translatey(0) scale(1); }
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
-@keyframes glitch {
-  0% { transform: translate(0); opacity: 1; }
-  20% { transform: translate(-2px, 1px); opacity: 0.8; }
-  40% { transform: translate(2px, -1px); opacity: 0.9; }
-  60% { transform: translate(-1px, 2px); opacity: 0.85; }
-  80% { transform: translate(1px, -2px); opacity: 0.9; }
-  100% { transform: translate(0); opacity: 1; }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-10px) rotate(3deg); }
+  50% { transform: translateY(0px) rotate(0deg); }
+  75% { transform: translateY(-5px) rotate(-3deg); }
 }
 
 /* ==========================================================================
-   responsive design
+   Responsive Design
    ========================================================================== */
 @media (max-width: 1024px) {
-  .chain-grid {
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  .chain-selector {
+    padding: 1.5rem;
   }
-  .chain-selector-header h3 {
-    font-size: 1.3rem;
+
+  .selector-content {
+    padding: 0 1rem;
   }
-  .chain-name {
-    font-size: 1.1rem;
+
+  .panel-title {
+    font-size: 1.4rem;
+  }
+
+  .chain-item {
+    flex: 0 0 260px;
   }
 }
 
 @media (max-width: 768px) {
-  .chain-selector {
-    padding: 1.5rem;
-  }
-  .chain-grid {
-    grid-template-columns: 1fr;
-  }
-  .chain-selector-header {
+  .panel-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
   }
-  .chain-selector-header h3 {
-    font-size: 1.2rem;
+
+  .panel-title {
+    font-size: 1.3rem;
   }
+
   .quantum-badge {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
   }
+
+  .chain-item {
+    flex: 0 0 240px;
+  }
+
   .chain-name {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
+
   .chain-description {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
   }
 }
 
 /* ==========================================================================
-   accessibility enhancements
+   Accessibility Enhancements
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-  .chain-card,
+  .chain-selector,
+  .chain-item,
   .pulse-dot,
   .quantum-badge,
+  .panel-title,
+  .panel-title svg,
   .chain-header svg,
-  .chain-name::after {
-    animation: none;
-    transition: none;
+  .floating-orb {
+    animation: none !important;
+    transition: none !important;
   }
 }
 
 @media (prefers-contrast: high) {
+  .panel-title,
   .chain-name,
   .chain-token,
   .chain-description,
@@ -442,20 +459,38 @@
   .selection-indicator {
     color: #ffffff;
     text-shadow: none;
+    -webkit-text-fill-color: #ffffff;
   }
-  .chain-card {
+
+  .chain-selector,
+  .chain-item {
+    background: rgba(0, 0, 0, 0.8);
     border-color: #ffffff;
+    backdrop-filter: none;
   }
-  .chain-card.selected {
+
+  .chain-item.selected {
     background: var(--chain-color);
-    color: #000000;
+    color: #ffffff;
   }
+
   .quantum-badge {
     background: #ffffff;
     color: #000000;
+    border: 1px solid #000000;
   }
-  .chain-card::after,
+
   .quantum-badge::after {
     background: transparent;
+  }
+
+  .floating-orb {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  .chain-item:hover,
+  .chain-item.selected {
+    border-left-color: #ffffff;
   }
 }

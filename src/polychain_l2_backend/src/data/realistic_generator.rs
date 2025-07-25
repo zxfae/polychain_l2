@@ -1,6 +1,3 @@
-/// Realistic data generator for hackathon demonstrations
-/// Generates ICP-like transactions with realistic addresses, amounts, and patterns
-
 use crate::types::PolyTransaction;
 use ic_cdk::api::time;
 use rand::{Rng, SeedableRng};
@@ -24,7 +21,7 @@ impl RealisticDataGenerator {
     pub fn new() -> Self {
         let seed = time() as u64;
         let rng = ChaCha8Rng::seed_from_u64(seed);
-        
+
         Self {
             rng,
             real_icp_addresses: Self::get_real_icp_addresses(),
@@ -34,7 +31,9 @@ impl RealisticDataGenerator {
 
     /// Generate realistic ICP-style transactions
     pub fn generate_realistic_batch(&mut self, count: u64) -> Vec<PolyTransaction> {
-        (0..count).map(|_| self.generate_realistic_transaction()).collect()
+        (0..count)
+            .map(|_| self.generate_realistic_transaction())
+            .collect()
     }
 
     /// Generate a single realistic transaction
@@ -56,59 +55,68 @@ impl RealisticDataGenerator {
     /// Generate high-frequency trading simulation
     pub fn generate_hft_batch(&mut self, count: u64) -> Vec<PolyTransaction> {
         let base_time = time() / 1_000_000_000; // Convert to seconds
-        (0..count).enumerate().map(|(i, _)| {
-            let amount = self.rng.gen_range(0.001..50.0);
-            let (sender, recipient) = self.select_trading_addresses();
-            
-            PolyTransaction {
-                sender,
-                recipient,
-                amount,
-                time_stamp: base_time + (i as u64 * 100), // 100ms intervals
-                signature: Some(format!("hft_sig_{}", i)),
-            }
-        }).collect()
+        (0..count)
+            .enumerate()
+            .map(|(i, _)| {
+                let amount = self.rng.gen_range(0.001..50.0);
+                let (sender, recipient) = self.select_trading_addresses();
+
+                PolyTransaction {
+                    sender,
+                    recipient,
+                    amount,
+                    time_stamp: base_time + (i as u64 * 100), // 100ms intervals
+                    signature: Some(format!("hft_sig_{}", i)),
+                }
+            })
+            .collect()
     }
 
     /// Generate DeFi-style transactions (larger amounts, specific patterns)
     pub fn generate_defi_batch(&mut self, count: u64) -> Vec<PolyTransaction> {
-        (0..count).map(|_| {
-            let amount = match self.rng.gen_range(0..100) {
-                0..=30 => self.rng.gen_range(1000.0..10000.0), // Large transactions
-                31..=60 => self.rng.gen_range(100.0..1000.0),   // Medium transactions  
-                _ => self.rng.gen_range(10.0..100.0),           // Small transactions
-            };
-            
-            let (sender, recipient) = self.select_addresses();
-            
-            PolyTransaction {
-                sender,
-                recipient,
-                amount,
-                time_stamp: self.generate_realistic_timestamp(),
-                signature: Some(self.generate_defi_signature()),
-            }
-        }).collect()
+        (0..count)
+            .map(|_| {
+                let amount = match self.rng.gen_range(0..100) {
+                    0..=30 => self.rng.gen_range(1000.0..10000.0),
+                    31..=60 => self.rng.gen_range(100.0..1000.0),
+                    _ => self.rng.gen_range(10.0..100.0),
+                };
+
+                let (sender, recipient) = self.select_addresses();
+
+                PolyTransaction {
+                    sender,
+                    recipient,
+                    amount,
+                    time_stamp: self.generate_realistic_timestamp(),
+                    signature: Some(self.generate_defi_signature()),
+                }
+            })
+            .collect()
     }
 
     fn select_transaction_pattern(&mut self) -> &TransactionPattern {
-        let total_weight: u32 = self.transaction_patterns.iter().map(|p| p.frequency_weight).sum();
+        let total_weight: u32 = self
+            .transaction_patterns
+            .iter()
+            .map(|p| p.frequency_weight)
+            .sum();
         let mut random = self.rng.gen_range(0..total_weight);
-        
+
         for pattern in &self.transaction_patterns {
             if random < pattern.frequency_weight {
                 return pattern;
             }
             random -= pattern.frequency_weight;
         }
-        
+
         &self.transaction_patterns[0]
     }
 
     fn generate_amount(&mut self, pattern: &TransactionPattern) -> f64 {
         let (min, max) = pattern.amount_range;
         let amount = self.rng.gen_range(min..max);
-        
+
         // Round to realistic precision
         (amount * 100.0).round() / 100.0
     }
@@ -116,12 +124,12 @@ impl RealisticDataGenerator {
     fn select_addresses(&mut self) -> (String, String) {
         let sender_idx = self.rng.gen_range(0..self.real_icp_addresses.len());
         let mut recipient_idx = self.rng.gen_range(0..self.real_icp_addresses.len());
-        
+
         // Ensure sender != recipient
         while recipient_idx == sender_idx {
             recipient_idx = self.rng.gen_range(0..self.real_icp_addresses.len());
         }
-        
+
         (
             self.real_icp_addresses[sender_idx].to_string(),
             self.real_icp_addresses[recipient_idx].to_string(),
@@ -133,11 +141,11 @@ impl RealisticDataGenerator {
         let trading_addresses = &self.real_icp_addresses[0..8]; // First 8 addresses
         let sender_idx = self.rng.gen_range(0..trading_addresses.len());
         let mut recipient_idx = self.rng.gen_range(0..trading_addresses.len());
-        
+
         while recipient_idx == sender_idx {
             recipient_idx = self.rng.gen_range(0..trading_addresses.len());
         }
-        
+
         (
             trading_addresses[sender_idx].to_string(),
             trading_addresses[recipient_idx].to_string(),
@@ -154,19 +162,19 @@ impl RealisticDataGenerator {
         // Generate realistic-looking signatures
         let signature_types = vec!["ecdsa", "schnorr", "falcon", "ml_dsa"];
         let sig_type = signature_types[self.rng.gen_range(0..signature_types.len())];
-        let random_hex: String = (0..64).map(|_| {
-            format!("{:x}", self.rng.gen_range(0..16))
-        }).collect();
-        
+        let random_hex: String = (0..64)
+            .map(|_| format!("{:x}", self.rng.gen_range(0..16)))
+            .collect();
+
         format!("{}_{}", sig_type, random_hex)
     }
 
     fn generate_defi_signature(&mut self) -> String {
         // DeFi signatures tend to be more complex
-        let random_hex: String = (0..128).map(|_| {
-            format!("{:x}", self.rng.gen_range(0..16))
-        }).collect();
-        
+        let random_hex: String = (0..128)
+            .map(|_| format!("{:x}", self.rng.gen_range(0..16)))
+            .collect();
+
         format!("defi_multisig_{}", random_hex)
     }
 
@@ -174,7 +182,7 @@ impl RealisticDataGenerator {
     fn get_real_icp_addresses() -> Vec<&'static str> {
         vec![
             "rrkah-fqaaa-aaaah-qcuaq-cai",
-            "rdmx6-jaaaa-aaaah-qcuya-cai", 
+            "rdmx6-jaaaa-aaaah-qcuya-cai",
             "renrk-eyaaa-aaaah-qcoma-cai",
             "rh2pm-ryaaa-aaaah-qcuqa-cai",
             "rkp4c-7iaaa-aaaah-qcuwa-cai",
@@ -243,16 +251,16 @@ pub struct NetworkSimulator {
 impl NetworkSimulator {
     pub fn new_mainnet_conditions() -> Self {
         Self {
-            latency_ms: 150,      // Realistic ICP mainnet latency
-            packet_loss: 0.001,   // Very low packet loss
+            latency_ms: 150,        // Realistic ICP mainnet latency
+            packet_loss: 0.001,     // Very low packet loss
             throughput_mbps: 100.0, // High throughput
         }
     }
 
     pub fn new_stressed_conditions() -> Self {
         Self {
-            latency_ms: 800,      // High latency
-            packet_loss: 0.01,    // 1% packet loss
+            latency_ms: 800,       // High latency
+            packet_loss: 0.01,     // 1% packet loss
             throughput_mbps: 10.0, // Limited throughput
         }
     }
@@ -267,7 +275,7 @@ impl NetworkSimulator {
         let latency_impact = (self.latency_ms as f64 / 100.0).min(3.0);
         let loss_impact = self.packet_loss * 100.0;
         let throughput_impact = (100.0 / self.throughput_mbps).min(5.0);
-        
+
         1.0 + (latency_impact + loss_impact + throughput_impact) / 10.0
     }
 }
