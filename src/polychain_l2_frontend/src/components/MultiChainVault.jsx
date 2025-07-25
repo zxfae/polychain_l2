@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { polychain_l2_backend } from 'declarations/polychain_l2_backend';
 import ChainSelector, { SUPPORTED_CHAINS } from './ChainSelector';
 import { Wallet, ArrowUpCircle, ArrowDownCircle, Shield, Zap, AlertTriangle, Link } from 'lucide-react';
+import '../design-system.css';
 import './multi-chain-vault.css';
 
 function MultiChainVault() {
@@ -23,27 +24,51 @@ function MultiChainVault() {
     if (!address) return;
     
     try {
-      // Pour Bitcoin, utiliser get_bitcoin_balance
+      let formattedBalances = [];
+
       if (selectedChain === 'Bitcoin') {
         const bitcoinBalance = await polychain_l2_backend.get_bitcoin_balance(address);
-        // Convertir le format pour compatibilité avec l'UI
-        const formattedBalances = [{
+        formattedBalances = [{
           chain: 'Bitcoin',
           native_balance: bitcoinBalance.native_bitcoin / 100_000_000, // Convertir satoshi en BTC
           wrapped_balance: bitcoinBalance.wrapped_bitcoin / 100_000_000,
           total_balance: bitcoinBalance.total_bitcoin / 100_000_000
         }];
-        setBalances(formattedBalances);
+      } else if (selectedChain === 'Ethereum') {
+        const ethereumBalance = await polychain_l2_backend.get_ethereum_balance(address);
+        formattedBalances = [{
+          chain: 'Ethereum',
+          native_balance: ethereumBalance.native_ethereum / 1_000_000_000_000_000_000, // Convertir wei en ETH
+          wrapped_balance: ethereumBalance.wrapped_ethereum / 1_000_000_000_000_000_000,
+          total_balance: ethereumBalance.total_ethereum / 1_000_000_000_000_000_000
+        }];
+      } else if (selectedChain === 'Internet Computer') {
+        const icpBalance = await polychain_l2_backend.get_icp_balance(address);
+        formattedBalances = [{
+          chain: 'Internet Computer',
+          native_balance: icpBalance.native_icp / 100_000_000, // Convertir e8s en ICP
+          wrapped_balance: icpBalance.wrapped_icp / 100_000_000,
+          total_balance: icpBalance.total_icp / 100_000_000
+        }];
+      } else if (selectedChain === 'Solana') {
+        const solanaBalance = await polychain_l2_backend.get_solana_balance(address);
+        formattedBalances = [{
+          chain: 'Solana',
+          native_balance: solanaBalance.native_solana / 1_000_000_000, // Convertir lamports en SOL
+          wrapped_balance: solanaBalance.wrapped_solana / 1_000_000_000,
+          total_balance: solanaBalance.total_solana / 1_000_000_000
+        }];
       } else {
-        // Pour les autres chaînes, simuler des balances nulles pour l'instant
-        const mockBalances = [{
+        // Pour les autres chaînes, simuler des balances nulles
+        formattedBalances = [{
           chain: selectedChain,
           native_balance: 0,
           wrapped_balance: 0,
           total_balance: 0
         }];
-        setBalances(mockBalances);
       }
+      
+      setBalances(formattedBalances);
     } catch (error) {
       console.error('Failed to load balances:', error);
       setBalances([]);
@@ -81,20 +106,21 @@ function MultiChainVault() {
       if (selectedChain === 'Bitcoin') {
         // Convertir en satoshi (1 BTC = 100,000,000 satoshi)
         const satoshiAmount = Math.round(numAmount * 100_000_000);
-        
-        if (quantumSecure) {
-          response = await polychain_l2_backend.deposit_bitcoin_with_crypto(
-            address,
-            satoshiAmount,
-            'falcon512', // Utiliser Falcon512 pour la sécurité quantique
-            75 // Niveau de menace quantique élevé
-          );
-        } else {
-          response = await polychain_l2_backend.deposit_bitcoin(address, satoshiAmount);
-        }
+        response = await polychain_l2_backend.deposit_bitcoin(address, satoshiAmount);
+      } else if (selectedChain === 'Ethereum') {
+        // Convertir en wei (1 ETH = 10^18 wei)
+        const weiAmount = BigInt(Math.round(numAmount * 1_000_000_000_000_000_000));
+        response = await polychain_l2_backend.deposit_ethereum(address, Number(weiAmount));
+      } else if (selectedChain === 'Internet Computer') {
+        // Convertir en e8s (1 ICP = 10^8 e8s)
+        const e8sAmount = Math.round(numAmount * 100_000_000);
+        response = await polychain_l2_backend.deposit_icp(address, e8sAmount);
+      } else if (selectedChain === 'Solana') {
+        // Convertir en lamports (1 SOL = 10^9 lamports)
+        const lamportsAmount = Math.round(numAmount * 1_000_000_000);
+        response = await polychain_l2_backend.deposit_solana(address, lamportsAmount);
       } else {
-        // Pour les autres chaînes, utiliser une fonction de fallback ou simulation
-        setResult(`❌ ${selectedChain} deposits not yet implemented. Use Bitcoin for now.`);
+        setResult(`❌ ${selectedChain} deposits not yet implemented.`);
         setLoading(false);
         return;
       }
@@ -146,9 +172,20 @@ function MultiChainVault() {
             false // quantum_secure
           );
         }
+      } else if (selectedChain === 'Ethereum') {
+        // Convertir en wei (1 ETH = 10^18 wei)
+        const weiAmount = BigInt(Math.round(numAmount * 1_000_000_000_000_000_000));
+        response = await polychain_l2_backend.withdraw_ethereum(address, Number(weiAmount), quantumSecure);
+      } else if (selectedChain === 'Internet Computer') {
+        // Convertir en e8s (1 ICP = 10^8 e8s)
+        const e8sAmount = Math.round(numAmount * 100_000_000);
+        response = await polychain_l2_backend.withdraw_icp(address, e8sAmount, quantumSecure);
+      } else if (selectedChain === 'Solana') {
+        // Convertir en lamports (1 SOL = 10^9 lamports)
+        const lamportsAmount = Math.round(numAmount * 1_000_000_000);
+        response = await polychain_l2_backend.withdraw_solana(address, lamportsAmount, quantumSecure);
       } else {
-        // Pour les autres chaînes, utiliser une fonction de fallback ou simulation
-        setResult(`❌ ${selectedChain} withdrawals not yet implemented. Use Bitcoin for now.`);
+        setResult(`❌ ${selectedChain} withdrawals not yet implemented.`);
         setLoading(false);
         return;
       }
@@ -170,17 +207,17 @@ function MultiChainVault() {
 
   const selectedChainInfo = SUPPORTED_CHAINS.find(c => c.id === selectedChain);
   const selectedChainBalance = balances.find(b => 
-    Object.keys(b.chain)[0] === selectedChain
+    b.chain === selectedChain
   );
 
   return (
-    <div className="multi-chain-vault">
+    <div className="multi-chain-vault ds-card">
       <div className="vault-header">
         <h2>
           <Link size={20} />
           Polychain L2 Universal Multi-Chain Vault
         </h2>
-        <div className="compression-badge">
+        <div className="compression-badge ds-badge">
           <Zap size={16} />
           70% Compression • All Chains
         </div>
@@ -192,25 +229,25 @@ function MultiChainVault() {
         showMetrics={true}
       />
 
-      <div className="vault-grid">
-        <div className="vault-actions">
+      <div className="vault-grid ds-grid ds-grid-2">
+        <div className="vault-actions ds-card-glass">
           <h3>
             <Wallet size={20} />
             {selectedChainInfo?.name} Operations
           </h3>
           
-          <div className="form-group">
+          <div className="ds-form-group">
             <label>Wallet Address:</label>
             <input
               type="text"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder={`Enter ${selectedChainInfo?.name} address...`}
-              className="address-input"
+              className="address-input ds-input"
             />
           </div>
 
-          <div className="form-group">
+          <div className="ds-form-group">
             <label>Amount ({selectedChainInfo?.token}):</label>
             <input
               type="number"
@@ -218,7 +255,7 @@ function MultiChainVault() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder={`0.00000000 ${selectedChainInfo?.token}`}
-              className="amount-input"
+              className="amount-input ds-input"
             />
           </div>
 
@@ -234,11 +271,11 @@ function MultiChainVault() {
             </label>
           </div>
 
-          <div className="action-buttons">
+          <div className="action-buttons button-group">
             <button 
               onClick={handleDeposit}
               disabled={loading}
-              className="deposit-btn"
+              className="deposit-btn ds-button"
             >
               <ArrowDownCircle size={18} />
               {loading ? 'Processing...' : 'Deposit'}
@@ -247,7 +284,7 @@ function MultiChainVault() {
             <button 
               onClick={handleWithdraw}
               disabled={loading}
-              className="withdraw-btn"
+              className="withdraw-btn ds-button ds-button-secondary"
             >
               <ArrowUpCircle size={18} />
               {loading ? 'Processing...' : 'Withdraw'}
@@ -255,14 +292,14 @@ function MultiChainVault() {
           </div>
 
           {result && (
-            <div className={`result ${result.includes('Error') ? 'error' : 'success'}`}>
+            <div className={`result ds-alert ${result.includes('Error') ? 'ds-alert-error' : 'ds-alert-success'}`}>
               {result.includes('Error') && <AlertTriangle size={16} />}
               {result}
             </div>
           )}
         </div>
 
-        <div className="balance-panel">
+        <div className="balance-panel ds-card-glass">
           <h3>
             <Wallet size={20} />
             Your Balances
@@ -296,7 +333,7 @@ function MultiChainVault() {
             {balances.length > 0 ? (
               <div className="balance-list">
                 {balances.map((balance, index) => {
-                  const chainId = Object.keys(balance.chain)[0];
+                  const chainId = balance.chain;
                   const chainInfo = SUPPORTED_CHAINS.find(c => c.id === chainId);
                   const IconComponent = chainInfo?.icon || Wallet;
                   

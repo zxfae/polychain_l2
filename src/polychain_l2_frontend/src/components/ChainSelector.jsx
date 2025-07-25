@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bitcoin, Hexagon, Circle, Sun, Link, Atom } from 'lucide-react';
+import '../design-system.css';
 import './chain-selector.css';
 
 const SUPPORTED_CHAINS = [
@@ -39,19 +40,19 @@ const SUPPORTED_CHAINS = [
 
 function ChainSelector({ selectedChain, onChainChange, showMetrics = false }) {
   return (
-    <div className="chain-selector">
+    <div className="chain-selector ds-card">
       <div className="chain-selector-header">
         <h3>
           <Link size={20} />
           Select Blockchain
         </h3>
-        <span className="quantum-badge">
+        <span className="quantum-badge ds-badge">
           <Atom size={16} />
           All Quantum-Ready
         </span>
       </div>
       
-      <div className="chain-grid">
+      <div className="chain-grid ds-grid ds-grid-auto">
         {SUPPORTED_CHAINS.map((chain, index) => {
           const IconComponent = chain.icon;
           const isSelected = selectedChain === chain.id;
@@ -59,7 +60,7 @@ function ChainSelector({ selectedChain, onChainChange, showMetrics = false }) {
           return (
             <button
               key={chain.id}
-              className={`chain-card ${isSelected ? 'selected' : ''}`}
+              className={`chain-card ds-card-glass ${isSelected ? 'selected' : ''}`}
               onClick={() => onChainChange(chain.id)}
               style={{ '--chain-color': chain.color, '--i': index }}
             >

@@ -1,0 +1,39 @@
+/* TransactionBatchCompressor.css - Design aligné avec App.css */
+
+/* Layout en grille */
+.compressor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: var(--space-6);
+  align-items: flex-start;
+}
+
+/* Styles pour la liste des transactions */
+.batch-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 300px;
+  overflow-y: auto;
+  padding: var(--space-2);
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius-md);
+}
+.batch-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3);
+  border-radius: var(--border-radius-sm);
+  font-size: 14px;
+}
+.batch-item:nth-child(odd) {
+  background-color: var(--surface-hover);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .compressor-grid {
+    grid-template-columns: 1fr;
+  }
+}

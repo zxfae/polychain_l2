@@ -1,74 +1,47 @@
-/* --- MultiChainVault Component Styles :: v1.0 BOLD, CLEAN & PROFESSIONAL --- */
+/* --- MultiChainVault Component Styles :: v2.0 with Design System Integration --- */
 
 /* ==========================================================================
-   Variables (Aligned with chain-selector.css)
+   Component-specific variables (Business Logic Colors - Preserved)
    ========================================================================== */
 :root {
-  /* Colors */
+  /* Chain-specific colors (Business Logic - PRESERVED) */
   --chain-btc: #a68b00;            /* Golden bronze for Bitcoin */
   --chain-eth: #1e3a8a;            /* Deep navy for Ethereum */
   --chain-icp: #15803d;            /* Forest green for ICP */
   --chain-sol: #7f1d1d;            /* Deep bordeaux for Solana */
-  --accent-glow: #2563eb;          /* Vibrant blue for highlights */
-  --glass-bg: rgba(17, 24, 39, 0.75); /* Enhanced frosted glass */
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --gradient-primary: linear-gradient(135deg, #2563eb, #15803d 50%, #4ade80);
-  --gradient-glow: linear-gradient(45deg, rgba(37, 99, 235, 0.5), rgba(21, 128, 61, 0.3));
-  --shimmer-glow: linear-gradient(
+
+  /* Component-specific effects */
+  --vault-shimmer: linear-gradient(
     90deg,
     transparent 0%,
     rgba(255, 255, 255, 0.2) 50%,
     transparent 100%
   );
-  --neutral-50: #f9fafb;           /* Light text for high contrast */
-  --neutral-200: #d4d4d8;          /* Soft gray for secondary text */
-  --neutral-700: #3f3f46;          /* Dark gray for backgrounds */
-  --neutral-800: #18181b;          /* Deep anthracite for depth */
-  --success-bg: #10b98120;         /* Success background */
-  --success-border: #10b98140;     /* Success border */
-  --error-bg: #ef444420;           /* Error background */
-  --error-border: #ef444440;       /* Error border */
-
-  /* Shadows and Transitions */
-  --shadow-glow: 0 0 15px rgba(37, 99, 235, 0.5);
-  --shadow-soft: 0 6px 14px rgba(0, 0, 0, 0.3);
-  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-glow: all 0.4s ease-in-out;
-
-  /* Typography */
-  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-display: 'Montserrat', sans-serif; /* Bold, professional headings */
-
-  /* Scanline Effect */
-  --scanline-bg: linear-gradient(
+  --vault-scanline: linear-gradient(
     0deg,
-    rgba(17, 24, 39, 0) 0%,
-    rgba(17, 24, 39, 0.2) 50%,
-    rgba(17, 24, 39, 0) 100%
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.05) 50%,
+    rgba(0, 0, 0, 0) 100%
   );
 }
 
 /* ==========================================================================
-   Multi-Chain Vault Container
+   Multi-Chain Vault Container (extends .ds-card)
    ========================================================================== */
 .multi-chain-vault {
-  background: var(--glass-bg);
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: inset 0 0 80px rgba(255, 255, 255, 0.03), var(--shadow-soft);
-  position: relative;
+  /* Override ds-card defaults with vault-specific styling */
+  background: var(--ds-glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  animation: vaultFadeIn 0.8s var(--transition-smooth) forwards;
+  box-shadow: inset 0 0 80px rgba(255, 255, 255, 0.03), var(--ds-shadow-lg);
+  animation: vaultFadeIn 0.8s var(--ds-transition-base) forwards;
 }
 
 .multi-chain-vault::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: var(--scanline-bg);
-  background-size: 100% 10px;
+  /* Override ds-card accent line with scanline effect */
+  background: var(--vault-scanline);
+  background-size: 100% 16px;
+  height: 100%;
   opacity: 0.3;
   animation: scan 4s linear infinite;
 }
@@ -80,30 +53,29 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--ds-space-6);
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--ds-space-4);
 }
 
 .vault-header h2 {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-2xl);
   font-weight: 700;
-  color: var(--neutral-50);
+  color: var(--ds-text-primary);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  gap: var(--ds-space-3);
   position: relative;
 }
 
 .vault-header h2 svg {
   width: 20px;
   height: 20px;
-  color: var(--accent-glow);
-  filter: drop-shadow(0 0 6px var(--accent-glow));
-  transition: var(--transition-glow);
+  color: var(--ds-secondary);
+  filter: drop-shadow(0 0 6px var(--ds-secondary));
+  transition: var(--ds-transition-base);
 }
 
 .vault-header h2:hover svg {
@@ -117,21 +89,14 @@
   left: 0;
   width: 100%;
   height: 2px;
-  background: var(--shimmer-glow);
+  background: var(--vault-shimmer);
   animation: glitch 1.5s infinite;
 }
 
 .compression-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: var(--gradient-primary);
-  color: var(--neutral-50);
-  padding: 0.4rem 1rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  box-shadow: var(--shadow-glow);
+  /* Extends .ds-badge with vault-specific effects */
+  background: var(--ds-gradient-primary);
+  box-shadow: var(--ds-shadow-glow);
   position: relative;
   overflow: hidden;
 }
@@ -143,36 +108,33 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--shimmer-glow);
+  background: var(--vault-shimmer);
   transform: translateX(-100%);
-  animation: shimmer 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: shimmer 3s var(--ds-ease-out) infinite;
   opacity: 0.5;
 }
 
 .compression-badge svg {
   width: 16px;
   height: 16px;
-  color: var(--neutral-50);
+  color: var(--ds-text-inverse);
+  z-index: 1;
 }
 
 /* ==========================================================================
-   Vault Grid
+   Vault Grid (extends .ds-grid .ds-grid-2)
    ========================================================================== */
 .vault-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  /* Grid behavior handled by design system classes */
+  gap: var(--ds-space-8);
 }
 
 /* ==========================================================================
-   Vault Actions
+   Vault Actions (extends .ds-card-glass)
    ========================================================================== */
 .vault-actions {
-  background: var(--glass-bg);
-  padding: 1.5rem;
-  border-radius: 12px;
-  border: 2px solid var(--glass-border);
-  animation: vaultFadeIn 0.8s var(--transition-smooth) forwards;
+  /* Glass card behavior handled by design system */
+  animation: vaultFadeIn 0.8s var(--ds-transition-base) forwards;
   animation-delay: 0.2s;
   position: relative;
 }
@@ -184,28 +146,31 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--shimmer-glow);
+  background: var(--vault-shimmer);
   transform: translateX(-100%);
-  animation: shimmer 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: shimmer 2.5s var(--ds-ease-out) infinite;
   opacity: 0.4;
+  pointer-events: none;
 }
 
 .vault-actions h3 {
-  margin: 0 0 1rem 0;
-  font-family: var(--font-display);
-  font-size: 1.25rem;
+  margin: 0 0 var(--ds-space-4) 0;
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-xl);
   font-weight: 700;
-  color: var(--neutral-50);
+  color: var(--ds-text-primary);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--ds-space-2);
+  z-index: 1;
+  position: relative;
 }
 
 .vault-actions h3 svg {
   width: 20px;
   height: 20px;
-  color: var(--accent-glow);
-  transition: var(--transition-glow);
+  color: var(--ds-secondary);
+  transition: var(--ds-transition-base);
 }
 
 .vault-actions h3:hover svg {
@@ -213,114 +178,73 @@
 }
 
 /* ==========================================================================
-   Form Group
+   Form Group (form styles handled by .ds-form-group in design system)
    ========================================================================== */
-.form-group {
-  margin-bottom: 1rem;
-}
+/* Form group styles now use .ds-form-group class */
 
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: var(--neutral-50);
-  font-family: var(--font-primary);
-  font-weight: 600;
-  font-size: 0.9375rem;
-}
-
+/* Vault-specific input styling */
 .address-input,
 .amount-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 2px solid var(--glass-border);
-  border-radius: 8px;
-  background: var(--glass-bg);
-  color: var(--neutral-50);
-  font-family: var(--font-primary);
-  font-size: 0.9375rem;
-  transition: var(--transition-smooth);
+  /* Base input styles handled by .ds-input */
+  background: var(--ds-glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .address-input:focus,
 .amount-input:focus {
-  border-color: var(--accent-glow);
-  box-shadow: var(--shadow-glow);
-  outline: none;
+  /* Focus styles enhanced with vault glow */
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1), var(--ds-shadow-glow);
 }
 
 /* ==========================================================================
    Quantum Toggle
    ========================================================================== */
 .quantum-toggle {
-  margin-bottom: 1.25rem;
+  margin-bottom: var(--ds-space-5);
 }
 
 .quantum-toggle label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--ds-space-2);
   cursor: pointer;
-  color: var(--neutral-200);
-  font-family: var(--font-primary);
-  font-size: 0.875rem;
+  color: var(--ds-text-secondary);
+  font-family: var(--ds-font-primary);
+  font-size: var(--ds-text-sm);
   font-weight: 500;
 }
 
 .quantum-toggle svg {
   width: 16px;
   height: 16px;
-  color: var(--accent-glow);
+  color: var(--ds-secondary);
 }
 
 /* ==========================================================================
-   Action Buttons
+   Action Buttons (using .ds-button classes)
    ========================================================================== */
 .action-buttons {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  /* Button group styles handled by .button-group class */
+  margin-bottom: var(--ds-space-4);
 }
 
-.deposit-btn,
-.withdraw-btn {
-  flex: 1;
-  padding: 0.75rem 1.25rem;
-  border: none;
-  border-radius: 8px;
-  font-family: var(--font-primary);
-  font-weight: 600;
-  font-size: 0.9375rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  position: relative;
-  transition: var(--transition-smooth);
-}
-
+/* Specific button styling for vault */
 .deposit-btn {
-  background: var(--gradient-primary);
-  color: var(--neutral-50);
+  /* Primary button styles handled by .ds-button */
+  background: var(--ds-gradient-primary);
 }
 
 .withdraw-btn {
-  background: linear-gradient(45deg, #f59e0b, #d97706);
-  color: var(--neutral-50);
-}
-
-.deposit-btn:hover,
-.withdraw-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-glow);
-  filter: brightness(1.1);
+  /* Secondary button with warning colors */
+  background: linear-gradient(45deg, var(--ds-warning), var(--ds-warning-dark, #d97706));
 }
 
 .deposit-btn svg,
 .withdraw-btn svg {
   width: 18px;
   height: 18px;
-  transition: var(--transition-glow);
+  transition: var(--ds-transition-base);
 }
 
 .deposit-btn:hover svg,
@@ -328,65 +252,49 @@
   transform: scale(1.1);
 }
 
-.deposit-btn:disabled,
-.withdraw-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
 /* ==========================================================================
-   Result
+   Result (using .ds-alert classes)
    ========================================================================== */
 .result {
-  padding: 0.75rem;
-  border-radius: 8px;
-  font-family: var(--font-primary);
-  font-weight: 600;
-  font-size: 0.875rem;
+  /* Base alert styles handled by .ds-alert */
   text-align: center;
+  margin: var(--ds-space-4) 0;
 }
 
+/* Alert styles now handled by .ds-alert-success and .ds-alert-error */
 .result.success {
-  background: var(--success-bg);
-  color: #059669;
-  border: 1px solid var(--success-border);
+  /* Use .ds-alert.ds-alert-success classes instead */
 }
 
 .result.error {
-  background: var(--error-bg);
-  color: #dc2626;
-  border: 1px solid var(--error-border);
+  /* Use .ds-alert.ds-alert-error classes instead */
 }
 
 /* ==========================================================================
-   Balance Panel
+   Balance Panel (extends .ds-card-glass)
    ========================================================================== */
 .balance-panel {
-  background: var(--glass-bg);
-  padding: 1.5rem;
-  border-radius: 12px;
-  border: 2px solid var(--glass-border);
-  animation: vaultFadeIn 0.8s var(--transition-smooth) forwards;
+  /* Glass card behavior handled by design system */
+  animation: vaultFadeIn 0.8s var(--ds-transition-base) forwards;
   animation-delay: 0.4s;
 }
 
 .balance-panel h3 {
-  margin: 0 0 1rem 0;
-  font-family: var(--font-display);
-  font-size: 1.25rem;
+  margin: 0 0 var(--ds-space-4) 0;
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-xl);
   font-weight: 700;
-  color: var(--neutral-50);
+  color: var(--ds-text-primary);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--ds-space-2);
 }
 
 .balance-panel h3 svg {
   width: 20px;
   height: 20px;
-  color: var(--accent-glow);
-  transition: var(--transition-glow);
+  color: var(--ds-secondary);
+  transition: var(--ds-transition-base);
 }
 
 .balance-panel h3:hover svg {
@@ -397,12 +305,15 @@
    Current Balance
    ========================================================================== */
 .current-balance {
-  background: var(--glass-bg);
-  padding: 1rem;
-  border-radius: 8px;
-  border: 2px solid var(--chain-color)30;
-  margin-bottom: 1.25rem;
+  background: var(--ds-glass-bg);
+  padding: var(--ds-space-4);
+  border-radius: var(--ds-radius-lg);
+  border: 2px solid;
+  border-color: color-mix(in srgb, var(--chain-color) 30%, transparent);
+  margin-bottom: var(--ds-space-5);
   position: relative;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .current-balance::after {
@@ -412,82 +323,89 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--shimmer-glow);
+  background: var(--vault-shimmer);
   transform: translateX(-100%);
-  animation: shimmer 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: shimmer 2.5s var(--ds-ease-out) infinite;
   opacity: 0.4;
+  pointer-events: none;
 }
 
 .balance-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  font-family: var(--font-display);
+  gap: var(--ds-space-2);
+  margin-bottom: var(--ds-space-3);
+  font-family: var(--ds-font-display);
   font-weight: 600;
-  font-size: 1.1rem;
-  color: var(--neutral-50);
+  font-size: var(--ds-text-lg);
+  color: var(--ds-text-primary);
+  position: relative;
+  z-index: 1;
 }
 
 .balance-amounts {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--ds-space-2);
+  position: relative;
+  z-index: 1;
 }
 
 .balance-item,
 .balance-total {
   display: flex;
   justify-content: space-between;
-  padding: 0.25rem 0;
-  font-family: var(--font-primary);
-  font-size: 0.875rem;
+  padding: var(--ds-space-1) 0;
+  font-family: var(--ds-font-primary);
+  font-size: var(--ds-text-sm);
 }
 
 .balance-total {
-  border-top: 1px solid var(--glass-border);
-  padding-top: 0.5rem;
+  border-top: 1px solid var(--ds-border-light);
+  padding-top: var(--ds-space-2);
   font-weight: 600;
-  color: var(--neutral-50);
+  color: var(--ds-text-primary);
 }
 
 .balance-item span:first-child,
 .balance-total span:first-child {
-  color: var(--neutral-200);
+  color: var(--ds-text-secondary);
 }
 
 /* ==========================================================================
    All Balances
    ========================================================================== */
 .all-balances h4 {
-  margin: 0 0 1rem 0;
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  color: var(--neutral-50);
+  margin: 0 0 var(--ds-space-4) 0;
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-lg);
+  color: var(--ds-text-primary);
 }
 
 .balance-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--ds-space-2);
 }
 
 .balance-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0.75rem;
-  background: var(--glass-bg);
-  border-radius: 6px;
-  border: 1px solid var(--glass-border);
-  animation: vaultFadeIn 0.8s var(--transition-smooth) forwards;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  background: var(--ds-glass-bg);
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--ds-border-light);
+  animation: vaultFadeIn 0.8s var(--ds-transition-base) forwards;
   animation-delay: calc(var(--i, 0) * 0.1s);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .balance-row .chain-info {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--ds-space-2);
 }
 
 .balance-row .chain-info svg {
@@ -496,21 +414,21 @@
 }
 
 .balance-value {
-  font-family: var(--font-primary);
+  font-family: var(--ds-font-primary);
   font-weight: 600;
-  color: var(--neutral-50);
+  color: var(--ds-text-primary);
 }
 
 .no-balances {
-  color: var(--neutral-200);
-  font-family: var(--font-primary);
+  color: var(--ds-text-secondary);
+  font-family: var(--ds-font-primary);
   font-style: italic;
   text-align: center;
-  padding: 1.25rem;
+  padding: var(--ds-space-5);
 }
 
 /* ==========================================================================
-   Animations
+   Animations (component-specific)
    ========================================================================== */
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
@@ -531,6 +449,11 @@
   100% { transform: translate(0); opacity: 1; }
 }
 
+@keyframes scan {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 40px; }
+}
+
 @keyframes pulse {
   0% { opacity: 1; transform: scale(1); box-shadow: 0 0 12px var(--chain-color); }
   50% { opacity: 0.8; transform: scale(1.25); box-shadow: 0 0 18px var(--chain-color); }
@@ -538,33 +461,33 @@
 }
 
 /* ==========================================================================
-   Responsive Design
+   Responsive Design (using design system breakpoints)
    ========================================================================== */
 @media (max-width: 1024px) {
   .vault-grid {
     grid-template-columns: 1fr;
   }
   .vault-header h2 {
-    font-size: 1.3rem;
+    font-size: var(--ds-text-xl);
   }
 }
 
 @media (max-width: 768px) {
   .multi-chain-vault {
-    padding: 1.5rem;
+    padding: var(--ds-space-6);
   }
   .vault-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.75rem;
+    gap: var(--ds-space-3);
   }
   .vault-actions,
   .balance-panel {
-    padding: 1rem;
+    padding: var(--ds-space-4);
   }
   .vault-actions h3,
   .balance-panel h3 {
-    font-size: 1.1rem;
+    font-size: var(--ds-text-lg);
   }
 }
 
@@ -572,6 +495,7 @@
    Accessibility Enhancements
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
+  /* Vault-specific reduced motion overrides */
   .multi-chain-vault,
   .vault-actions,
   .balance-panel,
@@ -579,47 +503,44 @@
   .vault-header h2::after,
   .current-balance::after,
   .compression-badge::after,
+  .vault-actions::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  
   .vault-actions h3 svg,
   .balance-panel h3 svg,
   .deposit-btn svg,
   .withdraw-btn svg {
-    animation: none;
-    transition: none;
+    transition: none !important;
   }
 }
 
 @media (prefers-contrast: high) {
+  /* High contrast vault-specific overrides */
   .vault-header h2,
   .vault-actions h3,
   .balance-panel h3,
-  .form-group label,
   .quantum-toggle label,
   .balance-item span,
   .balance-total span,
   .balance-value,
   .no-balances {
-    color: #ffffff;
+    color: var(--ds-text-primary);
     text-shadow: none;
   }
+  
   .vault-actions,
   .balance-panel,
   .current-balance,
   .balance-row {
-    border-color: #ffffff;
+    border-color: var(--ds-border);
+    background: var(--ds-surface);
   }
-  .deposit-btn,
-  .withdraw-btn {
-    background: #ffffff;
-    color: #000000;
-  }
-  .result.success,
-  .result.error {
-    background: #ffffff;
-    color: #000000;
-    border-color: #ffffff;
-  }
+  
   .current-balance::after,
-  .compression-badge::after {
+  .compression-badge::after,
+  .vault-actions::after {
     background: transparent;
   }
 }

@@ -1,0 +1,86 @@
+/* CryptoToolsHub.css - Design aligné avec App.css */
+
+/* Conteneur principal */
+.tools-hub-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Barre de navigation des onglets */
+.tools-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: var(--space-3);
+}
+
+.tab-button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-md);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.tab-button:hover {
+  background-color: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.tab-button.active {
+  background-color: var(--primary-accent);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Conteneur pour le contenu de l'onglet actif */
+.tab-content-wrapper {
+  animation: tool-fade-in 0.5s ease;
+}
+
+@keyframes tool-fade-in {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Styles spécifiques pour la compression */
+.batch-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 250px;
+  overflow-y: auto;
+  padding: var(--space-2);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-md);
+}
+.batch-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2);
+  border-radius: var(--border-radius-sm);
+  font-size: 12px;
+  font-family: monospace;
+}
+.batch-item:nth-child(odd) {
+  background-color: var(--surface-hover);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ai-grid,
+  .benchmark-grid,
+  .compression-grid {
+    grid-template-columns: 1fr;
+  }
+}

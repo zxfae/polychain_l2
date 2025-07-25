@@ -1,0 +1,627 @@
+.crypto-race {
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #16213e 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  min-height: 90vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.race-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.race-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #ffffff;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.trophy-icon {
+  color: #ffd700;
+  animation: trophy-glow 3s ease-in-out infinite;
+}
+
+@keyframes trophy-glow {
+  0%, 100% { 
+    color: #ffd700; 
+    transform: scale(1); 
+    filter: drop-shadow(0 0 5px #ffd700);
+  }
+  50% { 
+    color: #ffed4e; 
+    transform: scale(1.1); 
+    filter: drop-shadow(0 0 15px #ffd700);
+  }
+}
+
+.race-controls {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.race-settings {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.setting {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.setting label {
+  white-space: nowrap;
+}
+
+.setting input[type="number"] {
+  width: 80px;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.setting input[type="range"] {
+  width: 100px;
+  accent-color: #4488ff;
+}
+
+.setting span {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+
+.start-race-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.start-race-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
+}
+
+.start-race-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.race-arena {
+  position: relative;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.race-arena::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 48px,
+      rgba(255, 255, 255, 0.03) 48px,
+      rgba(255, 255, 255, 0.03) 50px
+    );
+  pointer-events: none;
+}
+
+.starting-line, .finish-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-lr;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.1), transparent);
+}
+
+.starting-line {
+  left: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, transparent, #4488ff, transparent);
+}
+
+.finish-line {
+  right: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, transparent, #44ff88, transparent);
+}
+
+.finish-spark {
+  color: #44ff88;
+  animation: spark 2s ease-in-out infinite;
+}
+
+@keyframes spark {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+
+.race-tracks {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0 2rem;
+}
+
+.race-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.race-track:hover {
+  border-color: var(--algo-color);
+  box-shadow: 0 0 20px rgba(var(--algo-color), 0.2);
+}
+
+.track-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.algo-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.algo-icon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.algo-name {
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 1.1rem;
+}
+
+.algo-desc {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+}
+
+.quantum-badge {
+  display: flex;
+  align-items: center;
+}
+
+.quantum-safe {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(68, 255, 136, 0.2);
+  color: #44ff88;
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid rgba(68, 255, 136, 0.3);
+}
+
+.quantum-vulnerable {
+  background: rgba(255, 170, 68, 0.2);
+  color: #ffaa44;
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 170, 68, 0.3);
+}
+
+.track-container {
+  position: relative;
+}
+
+.track-line {
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.track-line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 20px,
+    rgba(255, 255, 255, 0.1) 20px,
+    rgba(255, 255, 255, 0.1) 22px
+  );
+}
+
+.track-runner {
+  position: absolute;
+  top: -6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: left 0.1s ease-out;
+  transform: translateX(-50%);
+  animation: runner-bounce 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes runner-bounce {
+  0% { transform: translateX(-50%) translateY(0px); }
+  100% { transform: translateX(-50%) translateY(-2px); }
+}
+
+.runner-emoji {
+  font-size: 0.9rem;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.5));
+}
+
+.track-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.winner-announcement {
+  margin-bottom: 2rem;
+  animation: winner-appear 0.8s ease-out;
+}
+
+@keyframes winner-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.winner-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(45deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
+  border: 2px solid #ffd700;
+  border-radius: 15px;
+  backdrop-filter: blur(20px);
+  animation: winner-glow 2s ease-in-out infinite;
+}
+
+@keyframes winner-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); }
+}
+
+.winner-icon {
+  color: #ffd700;
+  font-size: 2rem;
+}
+
+.winner-info h3 {
+  color: #ffd700;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.4rem;
+}
+
+.winner-stats {
+  display: flex;
+  gap: 1.5rem;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.race-podium {
+  margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 15px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.race-podium h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ffffff;
+  margin: 0 0 2rem 0;
+  font-size: 1.4rem;
+}
+
+.podium-container {
+  display: flex;
+  justify-content: center;
+  align-items: end;
+  gap: 2rem;
+  height: 200px;
+}
+
+.podium-position {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.podium-runner {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  animation: podium-float 3s ease-in-out infinite;
+}
+
+@keyframes podium-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.podium-info {
+  text-align: center;
+  color: #ffffff;
+}
+
+.position-number {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.podium-info .algo-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.score, .time {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.podium-base {
+  width: 80px;
+  border-radius: 5px 5px 0 0;
+  position: relative;
+  opacity: 0.8;
+}
+
+.race-analytics {
+  margin-bottom: 2rem;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  background: linear-gradient(45deg, #4488ff, #6644ff);
+  border-radius: 10px;
+  color: white;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1;
+}
+
+.stat-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.detailed-results {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 15px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detailed-results h3 {
+  color: #ffffff;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.3rem;
+}
+
+.results-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-weight: 600;
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border-left: 3px solid var(--row-color);
+  color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.table-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(5px);
+}
+
+.algo-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quantum-shield {
+  color: #44ff88;
+}
+
+.time-cell, .efficiency-cell, .score-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .crypto-race {
+    padding: 1rem;
+  }
+  
+  .race-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .race-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .race-settings {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .podium-container {
+    flex-direction: column;
+    height: auto;
+    gap: 1rem;
+  }
+  
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .table-header, .table-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .table-header span::before,
+  .table-row span::before {
+    content: attr(data-label) ': ';
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+  }
+}

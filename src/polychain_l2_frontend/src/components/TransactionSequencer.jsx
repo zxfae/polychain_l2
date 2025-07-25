@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, CheckCircle, Clock, Package, Shield, Settings, Plus, Play, AlertTriangle } from 'lucide-react';
+import '../design-system.css';
 import './transaction-sequencer.css';
 
-// --- Sous-composants ---
+// --- Sub-components ---
 const MetricCard = ({ icon, value, label }) => (
-  <div className="metric-card" role="region" aria-label={label}>
+  <div className="ds-card-glass ds-hover-lift" role="region" aria-label={label}>
     <div className="metric-icon">{icon}</div>
     <div className="metric-content">
-      <div className="metric-value">{value}</div>
+      <div className="metric-value ds-metric-animate">{value}</div>
       <div className="metric-label">{label}</div>
     </div>
   </div>
@@ -107,24 +108,30 @@ const TransactionSequencer = ({ actor }) => {
     loadSequencerData();
   }, [loadSequencerData]);
 
-  // --- Rendu JSX ---
+  // --- JSX Render ---
   return (
-    <div className="transaction-sequencer" role="main" aria-label="Transaction Sequencer">
+    <div className="ds-card-workspace ds-animate-fadeIn" role="main" aria-label="Transaction Sequencer">
       <div className="sequencer-header">
-        <h1><RefreshCw size={24} aria-hidden="true" /> PolyChain L2 Sequencer</h1>
-        <p>Streamlined transaction sequencing with fair ordering.</p>
+        <h1 className="ds-heading-section">
+          <RefreshCw size={28} aria-hidden="true" />
+          PolyChain L2 Sequencer
+        </h1>
+        <p className="sequencer-description">Streamlined transaction sequencing with fair ordering.</p>
         
-        <div className="sequencer-info">
-          <div className="info-badge">
-            <strong>🔄 Automatic Blockchain Integration:</strong> 
-            Sequenced transaction batches are automatically converted to blocks and added to the blockchain. 
-            No manual intervention required!
+        <div className="ds-alert ds-alert-info">
+          <Package size={16} />
+          <div>
+            <strong>Automatic Blockchain Integration:</strong>
+            <p style={{ margin: 0, marginTop: 'var(--ds-space-1)' }}>
+              Sequenced transaction batches are automatically converted to blocks and added to the blockchain. 
+              No manual intervention required!
+            </p>
           </div>
         </div>
       </div>
 
       <div className="sequencer-metrics">
-        <div className="metrics-grid">
+        <div className="ds-metrics-executive ds-stagger-children">
           <MetricCard
             icon={<CheckCircle size={20} aria-hidden="true" />}
             value={sequencerData.metrics.total_transactions_sequenced.toLocaleString()}
