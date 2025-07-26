@@ -46,7 +46,7 @@ check_requirements() {
     # Node.js
     if command_exists node; then
         NODE_VERSION=$(node --version | cut -d'v' -f2)
-        if [[ "$(echo $NODE_VERSION | cut -d'.' -f1)" -ge 18 ]]; then
+        if [[ "$(echo "$NODE_VERSION" | cut -d'.' -f1)" -ge 18 ]]; then
             log_success "Node.js $NODE_VERSION found"
         else
             log_error "Node.js version $NODE_VERSION is too old. Please install Node.js 18 or higher."

@@ -129,7 +129,7 @@ check_dfx() {
     fi
     
     # Check Candid files
-    for did_file in $(find src -name "*.did" 2>/dev/null); do
+    find src -name "*.did" 2>/dev/null | while read -r did_file; do
         log_info "Checking Candid file: $did_file"
         if [ -f "$did_file" ]; then
             # Basic syntax check (if didc is available)
