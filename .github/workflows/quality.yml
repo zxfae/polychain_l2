@@ -24,6 +24,9 @@ jobs:
           override: true
       - name: Install DFX
         run: |
-          bash scripts/setup.sh
+          DFX_VERSION=0.15.2
+          wget https://github.com/dfinity/sdk/releases/download/${DFX_VERSION}/dfx-linux-x86_64.tar.gz
+          tar xzf dfx-linux-x86_64.tar.gz
+          ./dfx install --yes
       - name: Run check-quality.sh
         run: bash scripts/check-quality.sh
