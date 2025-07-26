@@ -191,7 +191,6 @@ type VaultStatistics = record {
 };
 
 service : {
-    "greet": (text) -> (text) query;
     "get_balance": (text) -> (float64) query;
     "create_transaction": (text, text, float64) -> (variant { Ok : text; Err : text });
     

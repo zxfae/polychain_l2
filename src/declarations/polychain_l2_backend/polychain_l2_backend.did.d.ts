@@ -268,7 +268,6 @@ export interface _SERVICE {
   'get_sequencer_metrics' : ActorMethod<[], SequencerMetrics>,
   'get_solana_balance' : ActorMethod<[string], SolanaBalance>,
   'get_vault_statistics' : ActorMethod<[], VaultStatistics>,
-  'greet' : ActorMethod<[string], string>,
   'is_quantum_ready_all_chains' : ActorMethod<[], boolean>,
   'list_compressed_batches' : ActorMethod<[], Array<CompressedBatch>>,
   'run_compression_benchmark' : ActorMethod<

@@ -11,7 +11,9 @@ pub mod cryptography;
 mod errors;
 mod validation;
 use std::cell::RefCell;
-use validation::{AddressValidator, AmountValidator, GeneralValidator, SecurityValidator, ValidationError};
+use validation::{
+    AddressValidator, AmountValidator, GeneralValidator, SecurityValidator, ValidationError,
+};
 
 // Cryptographically secure getrandom implementation for IC
 // Uses Blake3-based CSPRNG with IC-specific entropy sources
@@ -20,21 +22,21 @@ fn custom_getrandom(buf: &mut [u8]) -> Result<(), getrandom::Error> {
     let time = ic_cdk::api::time(); // High-resolution nanosecond timestamp
     let canister_id = ic_cdk::api::id(); // Unique canister identifier
     let instruction_counter = ic_cdk::api::instruction_counter(); // Dynamic execution state
-    
+
     // Use a thread-local counter to ensure uniqueness across calls
     use std::cell::RefCell;
     thread_local! {
         static COUNTER: RefCell<u64> = RefCell::new(0);
     }
-    
+
     let call_counter = COUNTER.with(|c| {
         let mut counter = c.borrow_mut();
         *counter = counter.wrapping_add(1);
         *counter
     });
-    
+
     let mut offset = 0;
-    
+
     while offset < buf.len() {
         // Create cryptographically secure seed with all entropy sources
         let mut hasher = blake3::Hasher::new();
@@ -43,19 +45,19 @@ fn custom_getrandom(buf: &mut [u8]) -> Result<(), getrandom::Error> {
         hasher.update(&instruction_counter.to_le_bytes());
         hasher.update(&call_counter.to_le_bytes());
         hasher.update(&offset.to_le_bytes()); // Ensure different output for each batch
-        
+
         // Add some dynamic canister state as additional entropy
         hasher.update(&ic_cdk::api::canister_version().to_le_bytes());
-        
+
         let hash = hasher.finalize();
         let random_bytes = hash.as_bytes();
-        
+
         // Copy as many bytes as needed (up to 32 per iteration)
         let copy_len = std::cmp::min(32, buf.len() - offset);
         buf[offset..offset + copy_len].copy_from_slice(&random_bytes[..copy_len]);
         offset += copy_len;
     }
-    
+
     Ok(())
 }
 
@@ -128,14 +130,14 @@ async fn create_transaction(
     // Comprehensive input validation
     let validated_sender = GeneralValidator::validate_string(&sender, "sender", Some(100))
         .map_err(|e| format!("Sender validation failed: {}", e))?;
-    
+
     let validated_recipient = GeneralValidator::validate_string(&recipient, "recipient", Some(100))
         .map_err(|e| format!("Recipient validation failed: {}", e))?;
 
     // Validate addresses (assuming generic format for now)
     AddressValidator::validate_address(&validated_sender, "generic")
         .map_err(|e| format!("Sender address invalid: {}", e))?;
-    
+
     AddressValidator::validate_address(&validated_recipient, "generic")
         .map_err(|e| format!("Recipient address invalid: {}", e))?;
 
@@ -146,7 +148,7 @@ async fn create_transaction(
     // Security check for malicious patterns
     SecurityValidator::detect_malicious_input(&validated_sender)
         .map_err(|e| format!("Security check failed for sender: {}", e))?;
-    
+
     SecurityValidator::detect_malicious_input(&validated_recipient)
         .map_err(|e| format!("Security check failed for recipient: {}", e))?;
 
@@ -184,11 +186,6 @@ async fn create_block(
 #[query]
 fn get_balance(_address: String) -> f64 {
     1000.0
-}
-
-#[query]
-fn greet(name: String) -> String {
-    format!("Hello, {name}!")
 }
 
 // ========== NOUVELLES FONCTIONS LAYER 2 BITCOIN ==========
@@ -270,7 +267,7 @@ async fn deposit_bitcoin(address: String, amount_satoshi: u64) -> Result<String,
     // Validate Bitcoin address
     let validated_address = GeneralValidator::validate_string(&address, "address", Some(100))
         .map_err(|e| format!("Address validation failed: {}", e))?;
-    
+
     AddressValidator::validate_address(&validated_address, "bitcoin")
         .map_err(|e| format!("Bitcoin address invalid: {}", e))?;
 
@@ -283,7 +280,9 @@ async fn deposit_bitcoin(address: String, amount_satoshi: u64) -> Result<String,
         .map_err(|e| format!("Security check failed: {}", e))?;
 
     BITCOIN_VAULT.with(|vault| {
-        let result = vault.borrow_mut().deposit_bitcoin(validated_address, amount_satoshi);
+        let result = vault
+            .borrow_mut()
+            .deposit_bitcoin(validated_address, amount_satoshi);
         Ok(result)
     })
 }
@@ -298,7 +297,7 @@ async fn deposit_bitcoin_with_crypto(
     // Validate Bitcoin address
     let validated_address = GeneralValidator::validate_string(&address, "address", Some(100))
         .map_err(|e| format!("Address validation failed: {}", e))?;
-    
+
     AddressValidator::validate_address(&validated_address, "bitcoin")
         .map_err(|e| format!("Bitcoin address invalid: {}", e))?;
 
@@ -362,7 +361,7 @@ async fn deposit_ethereum(address: String, amount_wei: u64) -> Result<String, St
     // Validate Ethereum address
     let validated_address = GeneralValidator::validate_string(&address, "address", Some(100))
         .map_err(|e| format!("Address validation failed: {}", e))?;
-    
+
     AddressValidator::validate_address(&validated_address, "ethereum")
         .map_err(|e| format!("Ethereum address invalid: {}", e))?;
 
@@ -376,7 +375,9 @@ async fn deposit_ethereum(address: String, amount_wei: u64) -> Result<String, St
 
     // Deposit to vault
     ETHEREUM_VAULT.with(|vault| {
-        vault.borrow_mut().deposit(&validated_address, amount_wei, true);
+        vault
+            .borrow_mut()
+            .deposit(&validated_address, amount_wei, true);
     });
 
     // Convert wei to ETH for display (1 ETH = 10^18 wei)

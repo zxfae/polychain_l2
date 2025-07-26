@@ -288,7 +288,6 @@ export const idlFactory = ({ IDL }) => {
     'get_sequencer_metrics' : IDL.Func([], [SequencerMetrics], ['query']),
     'get_solana_balance' : IDL.Func([IDL.Text], [SolanaBalance], ['query']),
     'get_vault_statistics' : IDL.Func([], [VaultStatistics], ['query']),
-    'greet' : IDL.Func([IDL.Text], [IDL.Text], ['query']),
     'is_quantum_ready_all_chains' : IDL.Func([], [IDL.Bool], ['query']),
     'list_compressed_batches' : IDL.Func(
         [],
