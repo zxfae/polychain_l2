@@ -53,14 +53,12 @@ impl<C: CryptographyBridge> TransactionSequencer<C> {
                 self.pending_transactions.drain(0..take_count).collect()
             }
             OrderingStrategy::FairOrdering => {
-                // Anti-MEV fair ordering
+                // Anti-MEV fair ordering using cryptographically secure hash
                 self.pending_transactions.sort_by_key(|tx| {
-                    use std::collections::hash_map::DefaultHasher;
-                    use std::hash::{Hash, Hasher};
-                    let mut hasher = DefaultHasher::new();
-                    tx.sender.hash(&mut hasher);
-                    tx.time_stamp.hash(&mut hasher);
-                    hasher.finish()
+                    let combined_data = format!("{}:{}", tx.sender, tx.time_stamp);
+                    let hash = blake3::hash(combined_data.as_bytes());
+                    // Convert first 8 bytes to u64 for sorting
+                    u64::from_le_bytes(hash.as_bytes()[0..8].try_into().unwrap_or([0; 8]))
                 });
                 self.pending_transactions.drain(0..take_count).collect()
             }

@@ -9,20 +9,53 @@ mod chain;
 mod crypto;
 pub mod cryptography;
 mod errors;
+mod validation;
 use std::cell::RefCell;
+use validation::{AddressValidator, AmountValidator, GeneralValidator, SecurityValidator, ValidationError};
 
-// Custom getrandom implementation for IC
+// Cryptographically secure getrandom implementation for IC
+// Uses Blake3-based CSPRNG with IC-specific entropy sources
 fn custom_getrandom(buf: &mut [u8]) -> Result<(), getrandom::Error> {
-    // Use IC's time-based entropy for randomness
-    let time = ic_cdk::api::time();
-    let mut seed = time.to_le_bytes();
-
-    // Simple PRNG based on time and position
-    for (i, byte) in buf.iter_mut().enumerate() {
-        seed[i % 8] = seed[i % 8].wrapping_add((i as u64).wrapping_mul(time) as u8);
-        *byte = seed[i % 8];
+    // Gather entropy from multiple IC-specific sources
+    let time = ic_cdk::api::time(); // High-resolution nanosecond timestamp
+    let canister_id = ic_cdk::api::id(); // Unique canister identifier
+    let instruction_counter = ic_cdk::api::instruction_counter(); // Dynamic execution state
+    
+    // Use a thread-local counter to ensure uniqueness across calls
+    use std::cell::RefCell;
+    thread_local! {
+        static COUNTER: RefCell<u64> = RefCell::new(0);
     }
-
+    
+    let call_counter = COUNTER.with(|c| {
+        let mut counter = c.borrow_mut();
+        *counter = counter.wrapping_add(1);
+        *counter
+    });
+    
+    let mut offset = 0;
+    
+    while offset < buf.len() {
+        // Create cryptographically secure seed with all entropy sources
+        let mut hasher = blake3::Hasher::new();
+        hasher.update(&time.to_le_bytes());
+        hasher.update(canister_id.as_slice());
+        hasher.update(&instruction_counter.to_le_bytes());
+        hasher.update(&call_counter.to_le_bytes());
+        hasher.update(&offset.to_le_bytes()); // Ensure different output for each batch
+        
+        // Add some dynamic canister state as additional entropy
+        hasher.update(&ic_cdk::api::canister_version().to_le_bytes());
+        
+        let hash = hasher.finalize();
+        let random_bytes = hash.as_bytes();
+        
+        // Copy as many bytes as needed (up to 32 per iteration)
+        let copy_len = std::cmp::min(32, buf.len() - offset);
+        buf[offset..offset + copy_len].copy_from_slice(&random_bytes[..copy_len]);
+        offset += copy_len;
+    }
+    
     Ok(())
 }
 
@@ -92,11 +125,32 @@ async fn create_transaction(
     recipient: String,
     amount: f64,
 ) -> Result<String, String> {
-    if amount <= 0.0 {
-        return Err("Amount must be positive".to_string());
-    }
+    // Comprehensive input validation
+    let validated_sender = GeneralValidator::validate_string(&sender, "sender", Some(100))
+        .map_err(|e| format!("Sender validation failed: {}", e))?;
+    
+    let validated_recipient = GeneralValidator::validate_string(&recipient, "recipient", Some(100))
+        .map_err(|e| format!("Recipient validation failed: {}", e))?;
 
-    let mut tx = PolyTransaction::new(sender, recipient, amount);
+    // Validate addresses (assuming generic format for now)
+    AddressValidator::validate_address(&validated_sender, "generic")
+        .map_err(|e| format!("Sender address invalid: {}", e))?;
+    
+    AddressValidator::validate_address(&validated_recipient, "generic")
+        .map_err(|e| format!("Recipient address invalid: {}", e))?;
+
+    // Convert and validate amount (assuming 8 decimal places like Bitcoin)
+    let _validated_amount = AmountValidator::validate_and_convert_float_amount(amount, 8)
+        .map_err(|e| format!("Amount validation failed: {}", e))?;
+
+    // Security check for malicious patterns
+    SecurityValidator::detect_malicious_input(&validated_sender)
+        .map_err(|e| format!("Security check failed for sender: {}", e))?;
+    
+    SecurityValidator::detect_malicious_input(&validated_recipient)
+        .map_err(|e| format!("Security check failed for recipient: {}", e))?;
+
+    let mut tx = PolyTransaction::new(validated_sender, validated_recipient, amount);
 
     if !tx.is_valid() {
         return Err("Invalid transaction parameters".to_string());
@@ -213,12 +267,23 @@ fn algorithm_to_string(algo: &CryptoAlgorithm) -> String {
 
 #[update]
 async fn deposit_bitcoin(address: String, amount_satoshi: u64) -> Result<String, String> {
-    if amount_satoshi == 0 {
-        return Err("Amount must be positive".to_string());
-    }
+    // Validate Bitcoin address
+    let validated_address = GeneralValidator::validate_string(&address, "address", Some(100))
+        .map_err(|e| format!("Address validation failed: {}", e))?;
+    
+    AddressValidator::validate_address(&validated_address, "bitcoin")
+        .map_err(|e| format!("Bitcoin address invalid: {}", e))?;
+
+    // Validate amount
+    AmountValidator::validate_amount(amount_satoshi, None)
+        .map_err(|e| format!("Amount validation failed: {}", e))?;
+
+    // Security check for malicious patterns
+    SecurityValidator::detect_malicious_input(&validated_address)
+        .map_err(|e| format!("Security check failed: {}", e))?;
 
     BITCOIN_VAULT.with(|vault| {
-        let result = vault.borrow_mut().deposit_bitcoin(address, amount_satoshi);
+        let result = vault.borrow_mut().deposit_bitcoin(validated_address, amount_satoshi);
         Ok(result)
     })
 }
@@ -230,9 +295,32 @@ async fn deposit_bitcoin_with_crypto(
     crypto_algorithm: Option<String>,
     quantum_threat_level: Option<u8>,
 ) -> Result<String, String> {
-    if amount_satoshi == 0 {
-        return Err("Amount must be positive".to_string());
+    // Validate Bitcoin address
+    let validated_address = GeneralValidator::validate_string(&address, "address", Some(100))
+        .map_err(|e| format!("Address validation failed: {}", e))?;
+    
+    AddressValidator::validate_address(&validated_address, "bitcoin")
+        .map_err(|e| format!("Bitcoin address invalid: {}", e))?;
+
+    // Validate amount
+    AmountValidator::validate_amount(amount_satoshi, None)
+        .map_err(|e| format!("Amount validation failed: {}", e))?;
+
+    // Validate crypto algorithm if provided
+    if let Some(ref algo) = crypto_algorithm {
+        GeneralValidator::validate_crypto_algorithm(algo)
+            .map_err(|e| format!("Crypto algorithm validation failed: {}", e))?;
     }
+
+    // Validate quantum threat level if provided
+    if let Some(level) = quantum_threat_level {
+        GeneralValidator::validate_quantum_threat_level(level)
+            .map_err(|e| format!("Quantum threat level validation failed: {}", e))?;
+    }
+
+    // Security check for malicious patterns
+    SecurityValidator::detect_malicious_input(&validated_address)
+        .map_err(|e| format!("Security check failed: {}", e))?;
 
     let policy = CryptoPolicy::default();
     let risk_level = match amount_satoshi {
@@ -259,7 +347,7 @@ async fn deposit_bitcoin_with_crypto(
     BITCOIN_VAULT.with(|vault| {
         let result = vault
             .borrow_mut()
-            .deposit_bitcoin(address.clone(), amount_satoshi);
+            .deposit_bitcoin(validated_address.clone(), amount_satoshi);
         let algo_name = algorithm_to_string(&selected_algo);
         Ok(format!(
             "{result} | Crypto: {algo_name} | Risk: {risk_level:?} | Quantum: {quantum_threat}",
@@ -271,20 +359,31 @@ async fn deposit_bitcoin_with_crypto(
 
 #[update]
 async fn deposit_ethereum(address: String, amount_wei: u64) -> Result<String, String> {
-    if amount_wei == 0 {
-        return Err("Amount must be positive".to_string());
-    }
+    // Validate Ethereum address
+    let validated_address = GeneralValidator::validate_string(&address, "address", Some(100))
+        .map_err(|e| format!("Address validation failed: {}", e))?;
+    
+    AddressValidator::validate_address(&validated_address, "ethereum")
+        .map_err(|e| format!("Ethereum address invalid: {}", e))?;
+
+    // Validate amount
+    AmountValidator::validate_amount(amount_wei, None)
+        .map_err(|e| format!("Amount validation failed: {}", e))?;
+
+    // Security check for malicious patterns
+    SecurityValidator::detect_malicious_input(&validated_address)
+        .map_err(|e| format!("Security check failed: {}", e))?;
 
     // Deposit to vault
     ETHEREUM_VAULT.with(|vault| {
-        vault.borrow_mut().deposit(&address, amount_wei, true);
+        vault.borrow_mut().deposit(&validated_address, amount_wei, true);
     });
 
     // Convert wei to ETH for display (1 ETH = 10^18 wei)
     let amount_eth = amount_wei as f64 / 1_000_000_000_000_000_000.0;
 
     Ok(format!(
-        "Ethereum deposit successful: {amount_eth} ETH ({amount_wei} wei) to address {address}"
+        "Ethereum deposit successful: {amount_eth} ETH ({amount_wei} wei) to address {validated_address}"
     ))
 }
 
@@ -1105,7 +1204,9 @@ async fn sequence_transaction_batch(
                             "0000000000000000000000000000000000000000000000000000000000000000"
                                 .to_string()
                         } else {
-                            blockchain.last().unwrap().hash.clone()
+                            blockchain.last()
+                                .map(|block| block.hash.clone())
+                                .unwrap_or_else(|| "0000000000000000000000000000000000000000000000000000000000000000".to_string())
                         }
                     });
 

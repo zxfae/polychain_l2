@@ -72,7 +72,13 @@ impl CryptographyBridge for Falcon512 {
         message: &[u8],
         signature: &Self::SignedMessage,
     ) -> Result<bool, crate::errors::CryptographyError> {
-        let sig_array: [u8; 17088] = signature.0.clone().try_into().unwrap_or([0; 17088]);
+        // Validate signature length first - critical for security
+        if signature.0.len() != 17088 {
+            return Err(crate::errors::CryptographyError::SigningError);
+        }
+        
+        let sig_array: [u8; 17088] = signature.0.clone().try_into()
+            .map_err(|_| crate::errors::CryptographyError::SigningError)?;
         let is_valid = public_key.0.verify(message, &sig_array, &[]);
         Ok(is_valid)
     }

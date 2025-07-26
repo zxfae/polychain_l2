@@ -41,8 +41,12 @@ impl PolyTransaction {
         use std::time::{SystemTime, UNIX_EPOCH};
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos() as i64
+            .map(|duration| duration.as_nanos() as i64)
+            .unwrap_or_else(|_| {
+                // Fallback to a fixed timestamp if system clock is before UNIX_EPOCH
+                // This is extremely unlikely but provides safety
+                ic_cdk::api::time() as i64
+            })
     }
 
     pub fn sign(&mut self, signature: String) {
@@ -78,27 +82,37 @@ impl PolyBlock {
         use std::time::{SystemTime, UNIX_EPOCH};
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos() as i64
+            .map(|duration| duration.as_nanos() as i64)
+            .unwrap_or_else(|_| {
+                // Fallback to a fixed timestamp if system clock is before UNIX_EPOCH
+                // This is extremely unlikely but provides safety
+                ic_cdk::api::time() as i64
+            })
     }
 
     pub fn calculate_hash(&self) -> String {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
+        // Use Blake3 for cryptographically secure block hashing
+        let mut hasher = blake3::Hasher::new();
+        
+        // Hash block metadata
+        hasher.update(self.previous_hash.as_bytes());
+        hasher.update(&self.timestamp.to_le_bytes());
+        hasher.update(&self.nonce.to_le_bytes());
 
-        let mut hasher = DefaultHasher::new();
-        self.previous_hash.hash(&mut hasher);
-        self.timestamp.hash(&mut hasher);
-        self.nonce.hash(&mut hasher);
-
+        // Hash all transactions deterministically
         for tx in &self.transactions {
-            tx.sender.hash(&mut hasher);
-            tx.recipient.hash(&mut hasher);
-            tx.amount.to_bits().hash(&mut hasher);
-            tx.time_stamp.hash(&mut hasher);
+            hasher.update(tx.sender.as_bytes());
+            hasher.update(tx.recipient.as_bytes());
+            hasher.update(&tx.amount.to_le_bytes());
+            hasher.update(&tx.time_stamp.to_le_bytes());
+            
+            // Include transaction signature if present
+            if let Some(ref sig) = tx.signature {
+                hasher.update(sig.as_bytes());
+            }
         }
 
-        format!("{:x}", hasher.finish())
+        hex::encode(hasher.finalize().as_bytes())
     }
 }
 
@@ -165,8 +179,12 @@ impl MultiChainTransaction {
         use std::time::{SystemTime, UNIX_EPOCH};
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos() as i64
+            .map(|duration| duration.as_nanos() as i64)
+            .unwrap_or_else(|_| {
+                // Fallback to a fixed timestamp if system clock is before UNIX_EPOCH
+                // This is extremely unlikely but provides safety
+                ic_cdk::api::time() as i64
+            })
     }
 
     pub fn sign(&mut self, signature: String) {

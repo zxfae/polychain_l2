@@ -43,18 +43,11 @@ impl BitcoinVault {
     }
 
     pub fn withdraw_bitcoin(&mut self, address: String, amount: u64, _crypto_algo: &str) -> String {
-        // Simulation withdrawal - génère un TxID fake
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
-
-        let mut hasher = DefaultHasher::new();
-        address.hash(&mut hasher);
-        amount.hash(&mut hasher);
-        self.transaction_count.hash(&mut hasher);
-
-        let tx_id = format!("{:x}", hasher.finish());
+        // Generate cryptographically secure transaction ID using Blake3
+        let tx_data = format!("{}:{}:{}", address, amount, self.transaction_count);
+        let tx_id = blake3::hash(tx_data.as_bytes());
         self.transaction_count += 1;
 
-        tx_id
+        hex::encode(tx_id.as_bytes())
     }
 }
