@@ -61,8 +61,12 @@ impl ChainVault for BitcoinVaultModule {
             return Err("Insufficient Bitcoin balance".to_string());
         }
         
-        // Deduct from balance
-        *self.native_balances.get_mut(&address).unwrap() -= amount;
+        // Deduct from balance - safe since we already checked balance exists above
+        if let Some(balance) = self.native_balances.get_mut(&address) {
+            *balance -= amount;
+        } else {
+            return Err("Address balance not found during withdrawal".to_string());
+        }
         
         // Record withdrawal with quantum signature if requested
         let mut tx = MultiChainTransaction::new(

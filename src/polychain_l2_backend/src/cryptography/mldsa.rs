@@ -71,7 +71,13 @@ impl CryptographyBridge for Mldsa44 {
         message: &[u8],
         signature: &Self::SignedMessage,
     ) -> Result<bool, CryptographyError> {
-        let sig_array: [u8; 2420] = signature.0.clone().try_into().unwrap_or([0; 2420]);
+        // Validate signature length first - critical for security
+        if signature.0.len() != 2420 {
+            return Err(CryptographyError::SigningError);
+        }
+        
+        let sig_array: [u8; 2420] = signature.0.clone().try_into()
+            .map_err(|_| CryptographyError::SigningError)?;
         let is_valid = public_key.0.verify(message, &sig_array, &[]);
         Ok(is_valid)
     }
