@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_BATCH_SIZE","MAX_STRING_LENGTH","MAX_TRANSACTION_AMOUNT","MIN_TRANSACTION_AMOUNT"],"enum":["ValidationError"],"struct":["AddressValidator","AmountValidator","GeneralValidator","SecurityValidator"],"type":["ValidationResult"]};
