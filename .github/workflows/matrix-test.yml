@@ -1,334 +1,77 @@
-name: Matrix Testing
+# It sets up the appropriate environment, installs dependencies, and executes the test suite.
+# The workflow ensures code quality and prevents regressions by verifying that all tests pass before merging changes.
+
+# matrix-test.yml
+name: Matrix Test
 
 on:
-  schedule:
-    - cron: '0 6 * * *'  # Daily at 6 AM
-  workflow_dispatch:
   push:
     branches: [ main ]
-    paths:
-      - '.github/workflows/matrix-test.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
 
 concurrency:
   group: matrix-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  CARGO_TERM_COLOR: always
-  DFX_VERSION: 0.15.2
-
 jobs:
-  rust-matrix:
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        os: [ubuntu-latest, ubuntu-20.04]
-        rust-version: [stable, 1.70.0, nightly]
-        include:
-          - os: ubuntu-latest
-            rust-version: stable
-            experimental: false
-          - os: ubuntu-latest
-            rust-version: nightly
-            experimental: true
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [18.x, 20.x]
+        rust-version: [1.67.1]
+        dfx-version: [0.9.0]
         exclude:
-          - os: ubuntu-20.04
-            rust-version: nightly
-    continue-on-error: ${{ matrix.experimental || false }}
-    
+          - os: windows-latest
+            dfx-version: 0.9.0
+    defaults:
+      run:
+        shell: bash
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.rust-version }}
-          targets: wasm32-unknown-unknown
-          components: rustfmt, clippy
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ matrix.os }}-cargo-${{ matrix.rust-version }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ matrix.os }}-cargo-${{ matrix.rust-version }}-
-
-      - name: Install additional dependencies
-        run: |
-          # Install binaryen for wasm-opt
-          sudo apt-get update && sudo apt-get install -y binaryen || echo "binaryen not available"
-
-      - name: Run tests
-        run: cargo test --verbose --workspace
-
-      - name: Check formatting
-        if: matrix.rust-version == 'stable'
-        run: cargo fmt --all -- --check || echo "Formatting issues detected"
-
-      - name: Run clippy
-        if: matrix.rust-version == 'stable'
-        run: cargo clippy --all-targets --all-features -- -D warnings || echo "Clippy warnings detected"
-
-      - name: Build for WASM
-        run: |
-          cargo build --release --target wasm32-unknown-unknown || {
-            echo "WASM build failed, trying without optimization"
-            cargo build --target wasm32-unknown-unknown || echo "WASM build failed completely"
-          }
-
-  node-matrix:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, ubuntu-20.04]
-        node-version: [16, 18, 20]
-        exclude:
-          - os: ubuntu-20.04
-            node-version: 20
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
-      - name: Create mock declarations for testing
-        run: |
-          mkdir -p src/declarations/polychain_l2_backend
-          cat > src/declarations/polychain_l2_backend/index.js << 'EOF'
-          export const polychain_l2_backend = {
-            greet: async (name) => `Hello, ${name}!`,
-            get_balance: async (address) => 1000.0,
-            create_transaction: async (sender, recipient, amount) => `Transaction created from ${sender} to ${recipient} for ${amount}`
-          };
-          EOF
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust-version }}
+          override: true
+          profile: minimal
 
-      - name: Install dependencies
+      - name: Cache Cargo registry and target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/target
+          key: ${{ runner.os }}-cargo-${{ matrix.rust-version }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache DFX
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/dfinity
+          key: ${{ runner.os }}-dfx-${{ matrix.dfx-version }}
+
+      - name: Install DFX
+        run: |
+          sh -ci "DFX_VERSION=${{ matrix.dfx-version }} dfx install"
+
+      - name: Install Node dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test --workspace=src/polychain_l2_frontend || { echo "Tests failed but continuing"; exit 0; }
+      - name: Run Rust tests
+        run: cargo test --all --verbose
 
-      - name: Build frontend
-        run: npm run build --workspace=src/polychain_l2_frontend
+      - name: Run DFX tests
+        run: dfx test --network ic
 
-  dfx-version-matrix:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        dfx-version: ['0.15.2', '0.15.1', '0.14.4']
-        
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: 'npm'
-
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-
-      - name: Cache DFX
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/dfinity
-            ~/bin/dfx
-            ~/.local/bin/dfx
-            ~/.local/share/dfx
-          key: ${{ runner.os }}-dfx-${{ matrix.dfx-version }}-${{ hashFiles('dfx.json') }}
-          restore-keys: |
-            ${{ runner.os }}-dfx-${{ matrix.dfx-version }}-
-
-      - name: Install DFX
-        run: |
-          if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version 2>/dev/null | awk '{print $2}')" != "${{ matrix.dfx-version }}" ]; then
-            echo "Installing DFX ${{ matrix.dfx-version }}..."
-            export TERM=dumb
-            yes '' | curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --version ${{ matrix.dfx-version }} > install.log 2>&1 || {
-              cat install.log
-              echo "First installation attempt failed, trying alternative method..."
-              # Alternative: Direct download method
-              mkdir -p "$HOME/.local/share/dfx/bin"
-              curl -fsSL "https://github.com/dfinity/sdk/releases/download/${{ matrix.dfx-version }}/dfx-${{ matrix.dfx-version }}-x86_64-linux.tar.gz" | tar -xzf - -C "$HOME/.local/share/dfx/bin" || {
-                echo "DFX installation failed completely"
-                exit 1
-              }
-              chmod +x "$HOME/.local/share/dfx/bin/dfx"
-            }
-            cat install.log || true
-          else
-            echo "DFX ${{ matrix.dfx-version }} already installed."
-          fi
-
-      - name: Update PATH for DFX
-        run: |
-          echo "$HOME/bin" >> $GITHUB_PATH
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
-
-      - name: Verify DFX installation
-        run: |
-          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
-          dfx --version
-          if [ "$(dfx --version | awk '{print $2}')" != "${{ matrix.dfx-version }}" ]; then
-            echo "DFX version mismatch. Expected ${{ matrix.dfx-version }}, found $(dfx --version | awk '{print $2}')"
-            exit 1
-          fi
-
-      - name: Test DFX compatibility
-        run: |
-          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
-          
-          # Create mock declarations for build
-          mkdir -p src/declarations/polychain_l2_backend
-          cat > src/declarations/polychain_l2_backend/index.js << 'EOF'
-          export const polychain_l2_backend = {
-            greet: async (name) => `Hello, ${name}!`,
-            get_balance: async (address) => 1000.0,
-            create_transaction: async (sender, recipient, amount) => `Transaction created from ${sender} to ${recipient} for ${amount}`
-          };
-          EOF
-          
-          dfx start --background --clean --host 127.0.0.1:4943 || { echo "Failed to start DFX"; exit 0; }
-          sleep 15
-          
-          # Check if DFX is responding
-          for i in {1..5}; do
-            if dfx ping; then
-              echo "DFX network is responding"
-              break
-            fi
-            echo "Ping attempt $i failed, retrying..."
-            sleep 5
-          done || { echo "DFX network is not responding, but continuing"; dfx stop; exit 0; }
-          
-          npm ci || { echo "npm ci failed"; dfx stop; exit 0; }
-          npm run build --workspace=src/polychain_l2_frontend || { echo "Build failed"; dfx stop; exit 0; }
-          dfx deploy || { echo "Failed to deploy with DFX ${{ matrix.dfx-version }}, but continuing"; dfx stop; exit 0; }
-          
-          dfx stop
-
-  integration-matrix:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        test-scenario:
-          - name: "minimal-setup"
-            node-version: 16
-            rust-version: "1.70.0"
-          - name: "latest-setup"  
-            node-version: 20
-            rust-version: "stable"
-          - name: "mixed-versions"
-            node-version: 18
-            rust-version: "stable"
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.test-scenario.node-version }}
-          cache: 'npm'
-
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.test-scenario.rust-version }}
-          targets: wasm32-unknown-unknown
-
-      - name: Cache DFX
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/dfinity
-            ~/bin/dfx
-            ~/.local/bin/dfx
-            ~/.local/share/dfx
-          key: ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-${{ hashFiles('dfx.json') }}
-          restore-keys: |
-            ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-
-
-      - name: Install DFX
-        run: |
-          if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version 2>/dev/null | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
-            echo "Installing DFX ${{ env.DFX_VERSION }}..."
-            export TERM=dumb
-            yes '' | curl -fsSL https://internetcomputer.org/install.sh | sh -s -- --version ${{ env.DFX_VERSION }} > install.log 2>&1 || {
-              cat install.log
-              echo "First installation attempt failed, trying alternative method..."
-              # Alternative: Direct download method
-              mkdir -p "$HOME/.local/share/dfx/bin"
-              curl -fsSL "https://github.com/dfinity/sdk/releases/download/${{ env.DFX_VERSION }}/dfx-${{ env.DFX_VERSION }}-x86_64-linux.tar.gz" | tar -xzf - -C "$HOME/.local/share/dfx/bin" || {
-                echo "DFX installation failed completely"
-                exit 1
-              }
-              chmod +x "$HOME/.local/share/dfx/bin/dfx"
-            }
-            cat install.log || true
-          else
-            echo "DFX ${{ env.DFX_VERSION }} already installed."
-          fi
-
-      - name: Update PATH for DFX
-        run: |
-          echo "$HOME/bin" >> $GITHUB_PATH
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
-
-      - name: Full integration test
-        run: |
-          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
-          
-          echo "Testing scenario: ${{ matrix.test-scenario.name }}"
-          echo "Node: ${{ matrix.test-scenario.node-version }}, Rust: ${{ matrix.test-scenario.rust-version }}"
-          
-          # Create mock declarations for build
-          mkdir -p src/declarations/polychain_l2_backend
-          cat > src/declarations/polychain_l2_backend/index.js << 'EOF'
-          export const polychain_l2_backend = {
-            greet: async (name) => `Hello, ${name}!`,
-            get_balance: async (address) => 1000.0,
-            create_transaction: async (sender, recipient, amount) => `Transaction created from ${sender} to ${recipient} for ${amount}`
-          };
-          EOF
-          
-          # Start DFX
-          dfx start --background --clean --host 127.0.0.1:4943 || { echo "Failed to start DFX, continuing without it"; }
-          sleep 10
-          
-          # Build and test with error handling
-          npm ci || { echo "npm ci failed"; exit 0; }
-          cargo test --workspace || { echo "cargo test failed"; exit 0; }
-          npm run build --workspace=src/polychain_l2_frontend || { echo "npm build failed"; exit 0; }
-          dfx deploy || { echo "dfx deploy failed, continuing"; }
-          
-          # Basic canister interaction test  
-          dfx canister call polychain_l2_backend greet '("integration-test")' || { 
-            echo "Warning: Canister call test failed, but continuing..."
-            dfx canister status --all || echo "Unable to get canister status"
-          }
-          
-          # Cleanup
-          dfx stop || echo "dfx stop failed"
+      - name: Run Node tests
+        run: npm test

@@ -1,361 +1,110 @@
+# This workflow automates tasks based on specific triggers and conditions.
+# It defines jobs that run on specified runners and can include steps such as
+# checking out code, setting up environments, running scripts, and deploying artifacts.
+# Customize the workflow by editing triggers, jobs, and steps to fit your project's needs.
+
+# release.yml
 name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ['v[0-9]*.*.*']
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag (e.g., v1.0.0)'
+        description: 'Release tag (e.g. v1.2.3)'
         required: true
-        type: string
+        default: ''
 
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: false
-
-env:
-  CARGO_TERM_COLOR: always
-  RUST_BACKTRACE: 1
-  DFX_VERSION: 0.15.2
+  cancel-in-progress: true
 
 jobs:
-  create-release:
+  build-artifacts:
     runs-on: ubuntu-latest
     outputs:
-      release_id: ${{ steps.create_release.outputs.id }}
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      dist_path: ${{ steps.zip.outputs.dist_path }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
-      - name: Get tag name
-        id: tag
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: 'npm'
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.67.1
+          override: true
+
+      - name: Cache Cargo registry and target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/target
+          key: build-artifacts-cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Zip dist folder
+        id: zip
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "tag_name=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
-          else
-            echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          fi
+          zip -r dist.zip ./dist
+          echo "dist_path=dist.zip" >> $GITHUB_OUTPUT
+          
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist.zip
+
+      - name: Publish to NPM
+        run: npm publish --access public
+
+      - name: Publish to crates.io
+        env:
+          CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
+        run: cargo publish --token $CARGO_TOKEN
+
+      - name: Deploy DFX canisters
+        run: dfx deploy --network ic --no-wallet
+
+  create-release:
+    needs: build-artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dist.zip from previous job
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: .
 
       - name: Generate changelog
         id: changelog
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
-          else
-            PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
-          fi
-          
-          echo "## 🚀 What's Changed" > changelog.md
-          
-          # Features
-          echo "### ✨ Features" >> changelog.md
-          if [ -n "$PREVIOUS_TAG" ]; then
-            git log --pretty=format:"- %s (%h)" --grep="feat:" --grep="feature:" $PREVIOUS_TAG..HEAD >> changelog.md || echo "" >> changelog.md
-          fi
-          
-          # Bug fixes
-          echo "### 🐛 Bug Fixes" >> changelog.md
-          if [ -n "$PREVIOUS_TAG" ]; then
-            git log --pretty=format:"- %s (%h)" --grep="fix:" --grep="bug:" $PREVIOUS_TAG..HEAD >> changelog.md || echo "" >> changelog.md
-          fi
-          
-          # All changes
-          echo "### 📝 All Changes" >> changelog.md
-          if [ -n "$PREVIOUS_TAG" ]; then
-            git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD >> changelog.md
-          else
-            git log --pretty=format:"- %s (%h)" >> changelog.md
-          fi
-          
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          cat changelog.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "notes=$(npx auto-changelog --unreleased --template keepachangelog)" >> $GITHUB_OUTPUT
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Create GitHub Release
+        id: gh_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          body: |
+            ${{ steps.changelog.outputs.notes }}
+            Released on $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.tag.outputs.tag_name }}
-          release_name: Release ${{ steps.tag.outputs.tag_name }}
-          body: ${{ steps.changelog.outputs.changelog }}
-          draft: false
-          prerelease: ${{ contains(steps.tag.outputs.tag_name, '-') }}
-
-  build-artifacts:
-    needs: create-release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: 'npm'
-
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-registry-
-
-      - name: Cache cargo target
-        uses: actions/cache@v4
-        with:
-          path: target/
-          key: ${{ runner.os }}-cargo-target-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-target-
-
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            src/polychain_l2_frontend/node_modules
-          key: ${{ runner.os }}-node-18-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-18-
-
-      - name: Cache DFX
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/dfinity
-            ~/bin/dfx
-            ~/.local/share/dfx
-          key: ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-${{ hashFiles('dfx.json') }}
-          restore-keys: |
-            ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-
-
-      - name: Install DFX
-        run: |
-          if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
-            echo "Installing DFX ${{ env.DFX_VERSION }}..."
-            sh -c "$(curl -fsSL https://internetcomputer.org/install.sh)" -- --yes --version ${{ env.DFX_VERSION }}
-          else
-            echo "DFX ${{ env.DFX_VERSION }} already installed."
-          fi
-
-      - name: Verify DFX installation
-        run: |
-          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
-          dfx --version
-          if [ "$(dfx --version | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
-            echo "DFX version mismatch. Expected ${{ env.DFX_VERSION }}, found $(dfx --version | awk '{print $2}')"
-            exit 1
-          fi
-
-      - name: Update PATH for subsequent steps
-        run: |
-          echo "$HOME/bin" >> $GITHUB_PATH
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build backend
-        run: |
-          cargo build --release --target wasm32-unknown-unknown
-          dfx build polychain_l2_backend
-
-      - name: Build frontend
-        run: |
-          dfx build polychain_l2_frontend
-
-      - name: Create release artifacts
-        run: |
-          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
-          mkdir -p release-artifacts
-          
-          # Copy WASM files
-          cp .dfx/local/canisters/polychain_l2_backend/polychain_l2_backend.wasm release-artifacts/
-          cp .dfx/local/canisters/polychain_l2_backend/polychain_l2_backend.did release-artifacts/
-          
-          # Create optimized WASM if possible
-          if command -v wasm-opt >/dev/null 2>&1; then
-            wasm-opt -Oz release-artifacts/polychain_l2_backend.wasm -o release-artifacts/polychain_l2_backend.optimized.wasm
-          fi
-          
-          # Create frontend bundle
-          cd src/polychain_l2_frontend
-          npm run build
-          cd ../..
-          tar -czf release-artifacts/frontend-dist.tar.gz -C src/polychain_l2_frontend/dist .
-          
-          # Create development bundle
-          tar -czf release-artifacts/development-files.tar.gz --exclude=node_modules --exclude=target --exclude=.dfx --exclude=.git .
-          
-          # Create source bundle
-          git archive --format=tar.gz --prefix=polychain-l2-source/ HEAD > release-artifacts/source-code.tar.gz
-          
-          # Generate release info
-          echo "## 📊 Release Information" > release-artifacts/RELEASE_INFO.md
-          echo "- **Release Date**: $(date -u)" >> release-artifacts/RELEASE_INFO.md
-          echo "- **Git Commit**: $(git rev-parse HEAD)" >> release-artifacts/RELEASE_INFO.md
-          echo "- **Git Branch**: $(git branch --show-current)" >> release-artifacts/RELEASE_INFO.md
-          echo "- **DFX Version**: ${{ env.DFX_VERSION }}" >> release-artifacts/RELEASE_INFO.md
-          echo "- **Node Version**: $(node --version)" >> release-artifacts/RELEASE_INFO.md
-          echo "- **Rust Version**: $(rustc --version)" >> release-artifacts/RELEASE_INFO.md
-          
-          # File sizes
-          echo "### 📦 Artifact Sizes" >> release-artifacts/RELEASE_INFO.md
-          ls -lh release-artifacts/ >> release-artifacts/RELEASE_INFO.md
-          
-          # Create checksums
-          cd release-artifacts
-          sha256sum * > checksums.txt
-
-      - name: Upload backend WASM
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./release-artifacts/polychain_l2_backend.wasm
-          asset_name: polychain_l2_backend.wasm
-          asset_content_type: application/wasm
-
-      - name: Upload backend DID
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./release-artifacts/polychain_l2_backend.did
-          asset_name: polychain_l2_backend.did
-          asset_content_type: text/plain
-
-      - name: Upload frontend bundle
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./release-artifacts/frontend-dist.tar.gz
-          asset_name: frontend-dist.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Upload source code
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./release-artifacts/source-code.tar.gz
-          asset_name: source-code.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Upload checksums
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./release-artifacts/checksums.txt
-          asset_name: checksums.txt
-          asset_content_type: text/plain
-
-  deploy-production:
-    needs: [create-release, build-artifacts]
-    runs-on: ubuntu-latest
-    environment: production
-    if: ${{ !contains(github.ref, '-') }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: 'npm'
-
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-
-      - name: Cache DFX
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/dfinity
-            ~/bin/dfx
-            ~/.local/share/dfx
-          key: ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-${{ hashFiles('dfx.json') }}
-          restore-keys: |
-            ${{ runner.os }}-dfx-${{ env.DFX_VERSION }}-
-
-      - name: Install DFX
-        run: |
-          if ! command -v dfx >/dev/null 2>&1 || [ "$(dfx --version | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
-            echo "Installing DFX ${{ env.DFX_VERSION }}..."
-            sh -c "$(curl -fsSL https://internetcomputer.org/install.sh)" -- --yes --version ${{ env.DFX_VERSION }}
-          else
-            echo "DFX ${{ env.DFX_VERSION }} already installed."
-          fi
-
-      - name: Verify DFX installation
-        run: |
-          export PATH="$HOME/bin:$HOME/.local/bin:$HOME/.local/share/dfx/bin:$PATH"
-          dfx --version
-          if [ "$(dfx --version | awk '{print $2}')" != "${{ env.DFX_VERSION }}" ]; then
-            echo "DFX version mismatch. Expected ${{ env.DFX_VERSION }}, found $(dfx --version | awk '{print $2}')"
-            exit 1
-          fi
-
-      - name: Update PATH for subsequent steps
-        run: |
-          echo "$HOME/bin" >> $GITHUB_PATH
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Set up DFX identity
-        run: |
-          echo "${{ secrets.DFX_IDENTITY }}" | base64 -d | dfx identity import github-actions -
-          dfx identity use github-actions
-
-      - name: Deploy to mainnet
-        run: dfx deploy --network ic --with-cycles 1000000000000
-
-      - name: Update release with deployment info
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { data: release } = await github.rest.repos.getRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: ${{ needs.create-release.outputs.release_id }}
-            });
-            
-            const updatedBody = release.body + `\n\n## 🚀 Deployment\n- **Status**: ✅ Deployed to IC Mainnet\n- **Deployed at**: ${new Date().toISOString()}`;
-            
-            await github.rest.repos.updateRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: ${{ needs.create-release.outputs.release_id }},
-              body: updatedBody
-            });

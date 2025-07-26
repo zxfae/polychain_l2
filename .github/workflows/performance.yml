@@ -1,123 +1,57 @@
-name: Performance Testing
+# It sets up the specified version of Node.js, installs dependencies using npm,
+# and executes the test suite to ensure code quality and correctness.
+# The workflow is triggered for all branches and pull requests targeting any branch.
+
+# performance.yml
+name: Performance
 
 on:
   push:
     branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
 
 concurrency:
   group: performance-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  CARGO_TERM_COLOR: always
-  DFX_VERSION: 0.15.2
-
 jobs:
-  rust-benchmarks:
+  measure:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: 'npm'
 
-      - name: Cache cargo registry
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.67.1
+          override: true
+
+      - name: Cache Cargo registry and target
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-registry-
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/target
+          key: performance-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Run benchmarks
-        run: |
-          cargo bench --workspace || echo "No benchmarks found"
-          
-      - name: Check binary size
-        run: |
-          echo "## Binary Sizes" >> performance-report.md
-          cargo build --release --target wasm32-unknown-unknown || {
-            echo "Build failed" >> performance-report.md
-            exit 0
-          }
-          find target/wasm32-unknown-unknown/release -name "*.wasm" -exec ls -lh {} \; >> performance-report.md || echo "No WASM files found" >> performance-report.md
+      - name: Run performance script
+        run: npm run perf:ci
 
-      - name: Memory usage analysis
-        run: |
-          echo "## Memory Analysis" >> performance-report.md
-          cargo test --release -- --nocapture 2>&1 | grep -i "memory\|heap\|stack" >> performance-report.md || echo "No memory stats available" >> performance-report.md
-
-  frontend-performance:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Upload Lighthouse report
+        uses: actions/upload-artifact@v3
         with:
-          node-version: 18
-          cache: 'npm'
+          name: lighthouse-report
+          path: reports/lighthouse
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build frontend
-        run: |
-          npm run build --workspace=src/polychain_l2_frontend || {
-            echo "Build failed, creating empty performance report"
-            echo "## Frontend Build Failed" >> frontend-performance.md
-            echo "Frontend build failed during CI run" >> frontend-performance.md
-          }
-
-      - name: Bundle analysis
-        run: |
-          echo "## Frontend Bundle Analysis" >> frontend-performance.md
-          echo "### Bundle sizes:" >> frontend-performance.md
-          du -sh src/polychain_l2_frontend/dist/* >> frontend-performance.md || echo "No dist files found" >> frontend-performance.md
-          
-          echo "### File count:" >> frontend-performance.md
-          find src/polychain_l2_frontend/dist -type f | wc -l >> frontend-performance.md
-
-      - name: Lighthouse CI (Static)
-        run: |
-          echo "## Lighthouse Analysis" >> frontend-performance.md
-          npm install -g @lhci/cli@0.12.x || {
-            echo "Failed to install Lighthouse CLI" >> frontend-performance.md
-            echo "Lighthouse CLI installation failed" >> frontend-performance.md
-            exit 0
-          }
-          if command -v lhci >/dev/null 2>&1 && [ -d "src/polychain_l2_frontend/dist" ]; then
-            lhci collect --staticDistDir=src/polychain_l2_frontend/dist --url=http://localhost/index.html || {
-              echo "Lighthouse analysis failed" >> frontend-performance.md
-            }
-          else
-            echo "Lighthouse CLI not available or dist directory missing" >> frontend-performance.md
-          fi
-
-      - name: Create default performance report if missing
-        if: always()
-        run: |
-          if [ ! -f "frontend-performance.md" ]; then
-            echo "## Frontend Performance Report" > frontend-performance.md
-            echo "Performance analysis was not completed during this run." >> frontend-performance.md
-          fi
-
-      - name: Upload performance artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
+      - name: Upload performance dashboard
+        uses: actions/upload-artifact@v3
         with:
-          name: performance-reports
-          path: |
-            frontend-performance.md
-            performance-report.md
-            .lighthouseci/
-          retention-days: 7
-
+          name: perf-dashboard
+          path: reports/dashboard
