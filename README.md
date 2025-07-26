@@ -51,6 +51,56 @@ dfx deploy
 # http://[canister-id].localhost:4943/
 ```
 
+## To test create transaction on a TX sequencer :
+
+Bitcoin (BTC)
+
+Supported formats:
+
+    Legacy P2PKH: 1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2
+    Legacy P2SH: 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
+    Bech32 Mainnet: bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq
+    Bech32 Testnet: tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx
+    Test addresses: test_bitcoin, demo_address
+
+Ethereum (ETH)
+
+Supported formats:
+
+    Standard: 0x742d35cc6527c85b8c1e80b71d5e12c5de7b3b5b
+    Checksum: 0x742D35Cc6527C85B8c1E80b71d5E12C5De7B3B5B
+    Test addresses: test_ethereum, demo_address
+
+Internet Computer (ICP)
+
+Supported formats:
+
+    Principal ID: rdmx6-jaaaa-aaaah-qcaiq-cai
+    Account ID: 2c3f4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c
+    Test addresses: test_icp, demo_address
+
+Solana (SOL)
+
+Supported formats:
+
+    Public Key: 11111111111111111111111111111112
+    Base58: DjVE6JNiYqPL2QXyCUUh8rNjHrbz9hXHNYt99MQ59qw1
+    System Program: 11111111111111111111111111111112
+    Test addresses: test_solana, demo_address
+
+Universal Test Addresses
+
+For all blockchains, the following addresses are valid:
+
+    demo_address
+    test_bitcoin
+    test_ethereum
+    test_icp
+    test_solana
+    Or any address starting with test_
+
+
+
 ## Core Components
 
 ### Multi-Chain Operations
@@ -87,6 +137,8 @@ sequence_transaction_batch(batch_size: u64) -> SequencerBatchResult
 // Consensus validation
 test_pos_consensus() -> Result<String, String>
 ```
+
+
 
 ## Development Roadmap
 
@@ -183,55 +235,6 @@ Our existing `AlgoConsensus` PoS system provides the foundation for zero-knowled
 - **Private consensus participation** for institutional validators
 
 ---
-
-## To test create transaction on a TX sequencer :
-
-Bitcoin (BTC)
-
-Supported formats:
-
-    Legacy P2PKH: 1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2
-    Legacy P2SH: 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
-    Bech32 Mainnet: bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq
-    Bech32 Testnet: tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx
-    Test addresses: test_bitcoin, demo_address
-
-Ethereum (ETH)
-
-Supported formats:
-
-    Standard: 0x742d35cc6527c85b8c1e80b71d5e12c5de7b3b5b
-    Checksum: 0x742D35Cc6527C85B8c1E80b71d5E12C5De7B3B5B
-    Test addresses: test_ethereum, demo_address
-
-Internet Computer (ICP)
-
-Supported formats:
-
-    Principal ID: rdmx6-jaaaa-aaaah-qcaiq-cai
-    Account ID: 2c3f4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c
-    Test addresses: test_icp, demo_address
-
-Solana (SOL)
-
-Supported formats:
-
-    Public Key: 11111111111111111111111111111112
-    Base58: DjVE6JNiYqPL2QXyCUUh8rNjHrbz9hXHNYt99MQ59qw1
-    System Program: 11111111111111111111111111111112
-    Test addresses: test_solana, demo_address
-
-Universal Test Addresses
-
-For all blockchains, the following addresses are valid:
-
-    demo_address
-    test_bitcoin
-    test_ethereum
-    test_icp
-    test_solana
-    Or any address starting with test_
-
 
 **Building the quantum-safe future of decentralized finance**
 
