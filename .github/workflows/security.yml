@@ -1,131 +1,32 @@
-name: Security Scan
+name: Security Audit
 
 on:
-  schedule:
-    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM
-  push:
-    branches: [ main ]
-    paths:
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'package.json'
-      - 'package-lock.json'
   pull_request:
-    branches: [ main ]
-    paths:
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'package.json'
-      - 'package-lock.json'
-
-concurrency:
-  group: security-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  CARGO_TERM_COLOR: always
+    branches: 
+        - '*'
+  push:
+    branches: [main]
 
 jobs:
-  rust-security:
+  security:
+    name: Security Audit
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
+      - uses: actions/checkout@v3
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
         with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-registry-
-
+          toolchain: stable
+          override: true
       - name: Install cargo-audit
-        run: cargo install --locked cargo-audit
-
+        run: cargo install cargo-audit
       - name: Run cargo audit
         run: cargo audit
-
-      - name: Check for unsafe code
-        run: |
-          echo "Checking for unsafe code blocks..."
-          if grep -r "unsafe" src/ --include="*.rs"; then
-            echo "⚠️ Unsafe code detected - manual review required"
-            exit 0  # Don't fail the build, just warn
-          else
-            echo "✅ No unsafe code detected"
-          fi
-
-  frontend-security:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
+      - name: Install frontend dependencies
+        run: npm ci --workspace=src/polychain_l2_frontend
       - name: Run npm audit
-        run: |
-          npm audit --audit-level=moderate || echo "Vulnerabilities detected - check output above"
-
-      - name: Generate SBOM
-        run: |
-          npx --yes @cyclonedx/cdxgen -t js -o frontend-sbom.json src/polychain_l2_frontend/
-
-      - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-sbom
-          path: frontend-sbom.json
-          retention-days: 30
-
-  secrets-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Full history for commit range scanning
-
-      - name: Debug Commit Info
-        run: |
-          echo "Event: ${{ github.event_name }}"
-          echo "Base SHA: ${{ github.event.before || github.event.pull_request.base.sha }}"
-          echo "Head SHA: ${{ github.event.after || github.event.pull_request.head.sha }}"
-          git log --oneline -n 5
-
-      - name: Check BASE and HEAD difference
-        id: check_diff
-        run: |
-          BASE="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'push' && github.event.before || 'main' }}"
-          HEAD="${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'push' && github.event.after || 'HEAD' }}"
-          echo "BASE=$BASE" >> $GITHUB_ENV
-          echo "HEAD=$HEAD" >> $GITHUB_ENV
-          if [ "$BASE" = "$HEAD" ]; then
-            echo "BASE and HEAD are the same, skipping TruffleHog scan."
-            echo "skip_trufflehog=true" >> $GITHUB_ENV
-          else
-            echo "skip_trufflehog=false" >> $GITHUB_ENV
-          fi
-
-      - name: Run TruffleHog OSS
-        if: env.skip_trufflehog == 'false'
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          base: ${{ env.BASE }}
-          head: ${{ env.HEAD }}
-          extra_args: --debug --only-verified
+        run: npm audit --audit-level=moderate

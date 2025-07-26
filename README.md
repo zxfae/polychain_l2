@@ -32,6 +32,24 @@ Revolutionary multi-chain DeFi platform combining post-quantum cryptography, zer
 - **Linear scalability** through dynamic resource allocation
 
 ## 🛠️ Quick Start
+### Prerequisites
+
+1. **Rust** (stable version)
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup target add wasm32-unknown-unknown
+```
+
+2. **Node.js** (version 18+)
+```bash
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+3. **DFX** (ICP SDK)
+```bash
+sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+```
 
 ```bash
 # Clone repository

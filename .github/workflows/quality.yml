@@ -1,0 +1,29 @@
+name: Project Quality Check
+
+on:
+  pull_request:
+    branches: 
+        - '*'
+  push:
+    branches: [main]  
+
+jobs:
+  quality-check:
+    name: Project Quality Check Script
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Node.js & Rust
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Install DFX
+        run: |
+          bash scripts/setup.sh
+      - name: Run check-quality.sh
+        run: bash scripts/check-quality.sh
